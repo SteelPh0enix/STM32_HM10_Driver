@@ -113,9 +113,7 @@ void StartMainTask(void* argument) {
   /* USER CODE BEGIN StartMainTask */
   /* Infinite loop */
   for (;;) {
-    printf("Hello, world!\n");
-    HAL_GPIO_TogglePin(BOARD_LED_GPIO_Port, BOARD_LED_Pin);
-    osDelay(1000);
+    osDelay(1);
   }
   /* USER CODE END StartMainTask */
 }
