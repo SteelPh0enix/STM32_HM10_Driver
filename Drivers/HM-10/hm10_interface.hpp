@@ -21,7 +21,7 @@ public:
   // If this function is non-blocking (for example, you're using DMA or interrupts), you also have to
   // re-implement `transmitComplete` with code that checks for completion (returns `false` until it's done).
   // If this function is blocking, you can ignore `transmitComplete`.
-  virtual int transmit(char const* data) = 0;
+  virtual int transmit(char* data, std::size_t amount) = 0;
   virtual bool transmitComplete() {
     return true;
   }

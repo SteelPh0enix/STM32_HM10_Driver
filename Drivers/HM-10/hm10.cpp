@@ -9,4 +9,16 @@
 
 namespace HM10 {
 
+HM10::HM10(Interface* interface) {
+  setInterface(interface);
+}
+
+void HM10::setInterface(Interface* interface) {
+  m_interface = interface;
+}
+
+Interface* HM10::interface() const {
+  return m_interface;
+}
+
 }
