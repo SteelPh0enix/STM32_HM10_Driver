@@ -27,6 +27,9 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "printf.h"
+#include "usart.h"
+#include <hm10.hpp>
+#include <hm10_interface_stm32_hal_blocking.hpp>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,6 +49,9 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+HM10::InterfaceSTM32HALBlocking hal_interface(&huart1);
+HM10::HM10<> hm10(&hal_interface);
+//HM10::HM10 hm10<64>(&hal_interface);
 
 /* USER CODE END Variables */
 /* Definitions for mainTask */
@@ -113,7 +119,8 @@ void StartMainTask(void* argument) {
   /* USER CODE BEGIN StartMainTask */
   /* Infinite loop */
   for (;;) {
-    osDelay(1);
+    printf("Is alive? %s\n", (hm10.isAlive() ? "yes" : "no"));
+    osDelay(1000);
   }
   /* USER CODE END StartMainTask */
 }
