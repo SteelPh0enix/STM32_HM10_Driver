@@ -7,6 +7,9 @@
 
 /*
  * IMPORTANT: BEFORE YOU USE THIS LIBRARY, READ THIS
+ * UPDATE YOUR HM-10 FIRMWARE BEFORE PLUGGING IT IN - THIS LIBRARY IS WRITTEN FOR V709
+ * YOU CAN DOWNLOAD THE FIRMWARE AND UPDATE INSTRUCTIONS HERE: http://jnhuamao.cn/download_rom_en.asp?id=1
+ *
  * This lib is created for usage with DMA, interrupts and RTOS. To use it without DMA, and/or without interrupts,
  * you have to re-write the `transmitBuffer` and `receiveToBuffer` methods. You'd also have to do that if you'd
  * want to port it to HAL_LL or registers, if you are into that kind of thing.
@@ -25,6 +28,7 @@
 
 #pragma once
 #include <stm32f4xx.h>
+#include <cstdint>
 #include "hm10_constants.hpp"
 
 // Re-define it somewhere in your code if you want to have different buffer size.
@@ -44,10 +48,22 @@
 #define platformDelay HAL_Delay
 #endif
 
+#define HM10_DEBUG_MODE
+#ifdef HM10_DEBUG_MODE
+#include "printf.h"
+#define debugLog printf
+#else
+#define debugLog
+#endif
+
 namespace HM10 {
 
 class HM10 {
 public:
+  // for some reason, on the newest version of firmware (V709), default baud rate (after factory reset)
+  // is 115200, not 9600. Change it here if you'll have issues with that.
+  static constexpr std::uint32_t DefaultBaudrate { 115200 };
+
   HM10(UART_HandleTypeDef* uart);
 
   void setUART(UART_HandleTypeDef* uart);
@@ -75,19 +91,31 @@ public:
   // If waitForStartup is `false`, then it returns `true` immediatelly after transmission is completed and successful.
   bool reboot(bool waitForStartup = true);
 
+  // Will restore all the settings to factory defaults, along with baudrate of MCU UART (to 9600bps)
+  bool factoryReset(bool waitForStartup = true);
+
   // Set the baudrate of the module and MCU
   bool setBaudRate(Baudrate new_baud);
+
+  // Gets the baudrate from HM-10
+  Baudrate baudRate();
 
 private:
   int transmitBuffer();
   void waitForTransmitCompletion() const;
 
   int startReceivingToBuffer(std::size_t expected_bytes = HM10_BUFFER_SIZE);
+  void abortReceiving();
   int receiveToBuffer(std::size_t expected_bytes = HM10_BUFFER_SIZE);
-  void waitForReceiveCompletion() const;
+  bool waitForReceiveCompletion(std::uint32_t max_time = 1000) const;
+
+  bool transmitAndReceive(std::size_t expected_bytes = HM10_BUFFER_SIZE,
+                          std::uint32_t rx_wait_time = 1000);
 
   void copyCommandToBuffer(char const* const command);
   bool compareWithResponse(char const* str);
+
+  void setUARTBaudrate(std::uint32_t new_baud);
 
   UART_HandleTypeDef* m_uart { nullptr };
 
@@ -96,9 +124,12 @@ private:
 
   char m_rxBuffer[HM10_BUFFER_SIZE];
   std::size_t m_rxDataLength { 0 };
+  std::size_t m_rxDataExpected { 0 };
 
   bool m_rxInProgress { false };
   bool m_txInProgress { false };
+
+  bool m_factoryRebootPending { false };
 };
 
 }

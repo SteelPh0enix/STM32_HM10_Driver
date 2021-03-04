@@ -36,12 +36,4 @@ constexpr std::uint32_t BaudrateValues[] = { 9600,
                                              1200,
                                              230400 };
 
-namespace Command {
-constexpr char const* const AT = "AT";
-}
-
-namespace Response {
-constexpr char const* const OK = "OK";
-}
-
 }

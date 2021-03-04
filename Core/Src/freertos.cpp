@@ -116,11 +116,25 @@ void MX_FREERTOS_Init(void) {
 void StartMainTask(void* argument) {
   /* USER CODE BEGIN StartMainTask */
 
-  /* Infinite loop */
+  osDelay(100);
+
+  bool isAlive { false };
+  while (!isAlive) {
+    isAlive = hm10.isAlive();
+    printf("Is alive? %s\n", (hm10.isAlive() ? "yes" : "no"));
+    osDelay(100);
+  }
+
+  hm10.factoryReset();
+
+  printf("Is alive after factory reboot? %s\n", (hm10.isAlive() ? "yes" : "no"));
+
+  hm10.setBaudRate(HM10::Baudrate::Baud230400);
+
+  printf("Is alive after baudrate change? %s\n", (hm10.isAlive() ? "yes" : "no"));
 
   for (;;) {
-    printf("Is alive? %s\n", (hm10.isAlive() ? "yes" : "no"));
-    osDelay(1000);
+    osDelay(1);
   }
   /* USER CODE END StartMainTask */
 }
