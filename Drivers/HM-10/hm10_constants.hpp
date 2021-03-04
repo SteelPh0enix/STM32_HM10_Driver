@@ -40,4 +40,8 @@ namespace Command {
 constexpr char const* const AT = "AT";
 }
 
+namespace Response {
+constexpr char const* const OK = "OK";
+}
+
 }

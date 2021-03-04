@@ -29,7 +29,6 @@
 #include "printf.h"
 #include "usart.h"
 #include <hm10.hpp>
-#include <hm10_interface_stm32_hal_blocking.hpp>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -39,7 +38,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define HM10_UART huart1
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,8 +48,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-HM10::InterfaceSTM32HALBlocking hal_interface(&huart1);
-HM10::HM10<> hm10(&hal_interface);
+HM10::HM10 hm10(&HM10_UART);
 //HM10::HM10 hm10<64>(&hal_interface);
 
 /* USER CODE END Variables */
@@ -117,7 +115,9 @@ void MX_FREERTOS_Init(void) {
 /* USER CODE END Header_StartMainTask */
 void StartMainTask(void* argument) {
   /* USER CODE BEGIN StartMainTask */
+
   /* Infinite loop */
+
   for (;;) {
     printf("Is alive? %s\n", (hm10.isAlive() ? "yes" : "no"));
     osDelay(1000);
@@ -132,6 +132,26 @@ void _putchar(char character) {
     ITM_SendChar('\r');
   }
   ITM_SendChar(character);
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
+  if (huart == &HM10_UART) {
+    HAL_GPIO_WritePin(BOARD_LED_GPIO_Port, BOARD_LED_Pin, GPIO_PIN_RESET);
+    hm10.transmitCompleted();
+  }
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
+  if (huart == &HM10_UART) {
+    HAL_GPIO_WritePin(BOARD_LED_GPIO_Port, BOARD_LED_Pin, GPIO_PIN_SET);
+    hm10.receiveCompleted();
+  }
+}
+
+void HAL_UART_ErrorCallback(UART_HandleTypeDef* huart) {
+  if (huart == &HM10_UART) {
+    printf("UART error - code %d (0x%02X)\n", huart->ErrorCode, huart->ErrorCode);
+  }
 }
 /* USER CODE END Application */
 
