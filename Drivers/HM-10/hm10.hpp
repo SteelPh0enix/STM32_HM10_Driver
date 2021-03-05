@@ -62,7 +62,7 @@ class HM10 {
 public:
   // for some reason, on the newest version of firmware (V709), default baud rate (after factory reset)
   // is 115200, not 9600. Change it here if you'll have issues with that.
-  static constexpr std::uint32_t DefaultBaudrate { 115200 };
+  static constexpr Baudrate DefaultBaudrate { Baudrate::Baud115200 };
 
   HM10(UART_HandleTypeDef* uart);
 
@@ -71,7 +71,16 @@ public:
 
   std::size_t bufferSize() const;
 
-  // Interrupt handler methods, use them to notify about RX/TX completion
+  // Initializes the module communication (enables UART idle line interrupt and starts the receive procedure)
+  // In order for this library to work correct, you have to call transmitCompleted IN IDLE LINE INTERRUPT HANDLER.
+  // Since HAL does not support it out-of-the-box, you have to handle it manually in USARTx_IRQHandler().
+  // RX DMA channel must run in circular mode.
+  // See the example in repository (branch `example`) to see how to do that.
+  int initialize();
+
+  // Interrupt handler methods, use them to notify about RX/TX completion.
+  // Call `receiveCompleted` in idle line interrupt handler.
+  // Call `transmitCompleted` in standard transmit completion handler.
   void receiveCompleted();
   void transmitCompleted();
 
@@ -94,8 +103,8 @@ public:
   // Will restore all the settings to factory defaults, along with baudrate of MCU UART (to 9600bps)
   bool factoryReset(bool waitForStartup = true);
 
-  // Set the baudrate of the module and MCU
-  bool setBaudRate(Baudrate new_baud);
+  // Set the baudrate of the module and MCU. Automatically reboots the module, unless `reboot` is false.
+  bool setBaudRate(Baudrate new_baud, bool rebootImmediately = true, bool waitForStartup = true);
 
   // Gets the baudrate from HM-10
   Baudrate baudRate();
@@ -104,13 +113,12 @@ private:
   int transmitBuffer();
   void waitForTransmitCompletion() const;
 
-  int startReceivingToBuffer(std::size_t expected_bytes = HM10_BUFFER_SIZE);
+  void startReceivingToBuffer();
   void abortReceiving();
-  int receiveToBuffer(std::size_t expected_bytes = HM10_BUFFER_SIZE);
+  bool receiveToBuffer();
   bool waitForReceiveCompletion(std::uint32_t max_time = 1000) const;
 
-  bool transmitAndReceive(std::size_t expected_bytes = HM10_BUFFER_SIZE,
-                          std::uint32_t rx_wait_time = 1000);
+  bool transmitAndReceive(std::uint32_t rx_wait_time = 1000);
 
   void copyCommandToBuffer(char const* const command);
   bool compareWithResponse(char const* str);
@@ -119,17 +127,27 @@ private:
 
   UART_HandleTypeDef* m_uart { nullptr };
 
-  char m_txBuffer[HM10_BUFFER_SIZE];
+  // TX buffer - data to transmit will be temporarily stored here
+  char m_txBuffer[HM10_BUFFER_SIZE] { };
   std::size_t m_txDataLength { 0 };
 
-  char m_rxBuffer[HM10_BUFFER_SIZE];
-  std::size_t m_rxDataLength { 0 };
-  std::size_t m_rxDataExpected { 0 };
+  // RX buffer - for DMA, it'll put the data here
+  char m_rxBuffer[HM10_BUFFER_SIZE] { };
+  // Message buffer - the message from RX buffer will be copied here.
+  // This is necessary for message reconstruction if DMA will roll over the buffer
+  // while receiving the data.
+  char m_messageBuffer[HM10_BUFFER_SIZE] { };
+  std::size_t m_messageLength { 0 };
+  char* m_msgStartPtr { &m_rxBuffer[0] };
+  char const* m_rxBufferEnd { &m_rxBuffer[0] + HM10_BUFFER_SIZE };
 
   bool m_rxInProgress { false };
   bool m_txInProgress { false };
 
   bool m_factoryRebootPending { false };
+
+  Baudrate m_currentBaudrate { DefaultBaudrate };
+  Baudrate m_newBaudrate { DefaultBaudrate };
 };
 
 }

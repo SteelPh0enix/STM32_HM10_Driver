@@ -54,7 +54,7 @@ HM10::HM10 hm10(&HM10_UART);
 /* USER CODE END Variables */
 /* Definitions for mainTask */
 osThreadId_t mainTaskHandle;
-osThreadAttr_t const mainTask_attributes = { .name = "mainTask", .stack_size = 512 * 4, .priority =
+osThreadAttr_t const mainTask_attributes = { .name = "mainTask", .stack_size = 512 * 4, .priority = // @suppress("Invalid arguments")
     (osPriority_t) osPriorityNormal, };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -116,22 +116,30 @@ void MX_FREERTOS_Init(void) {
 void StartMainTask(void* argument) {
   /* USER CODE BEGIN StartMainTask */
 
+  // TODO: idle-line based RX instead of standard DMA RX
   osDelay(100);
 
+  int initStatus = hm10.initialize();
+  if (initStatus != HAL_OK) {
+    printf("An error occurred while initializing HM10 comms: %d (0x%02X)\n",
+           initStatus,
+           initStatus);
+  }
+
   bool isAlive { false };
-  while (!isAlive) {
+  while (true) {
     isAlive = hm10.isAlive();
     printf("Is alive? %s\n", (hm10.isAlive() ? "yes" : "no"));
     osDelay(100);
   }
 
-  hm10.factoryReset();
-
-  printf("Is alive after factory reboot? %s\n", (hm10.isAlive() ? "yes" : "no"));
-
-  hm10.setBaudRate(HM10::Baudrate::Baud230400);
-
-  printf("Is alive after baudrate change? %s\n", (hm10.isAlive() ? "yes" : "no"));
+//  hm10.factoryReset();
+//
+//  printf("Is alive after factory reboot? %s\n", (hm10.isAlive() ? "yes" : "no"));
+//
+//  hm10.setBaudRate(HM10::Baudrate::Baud230400);
+//
+//  printf("Is alive after baudrate change? %s\n", (hm10.isAlive() ? "yes" : "no"));
 
   for (;;) {
     osDelay(1);
@@ -155,16 +163,17 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef* huart) {
   }
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart) {
-  if (huart == &HM10_UART) {
-    HAL_GPIO_WritePin(BOARD_LED_GPIO_Port, BOARD_LED_Pin, GPIO_PIN_SET);
-    hm10.receiveCompleted();
-  }
-}
-
 void HAL_UART_ErrorCallback(UART_HandleTypeDef* huart) {
   if (huart == &HM10_UART) {
     printf("UART error - code %d (0x%02X)\n", huart->ErrorCode, huart->ErrorCode);
+  }
+}
+
+extern "C" void HM10_UART_HandleIdleLine() {
+  if (__HAL_UART_GET_FLAG(&HM10_UART, UART_FLAG_IDLE)) {
+    __HAL_UART_CLEAR_IDLEFLAG(&HM10_UART);
+    HAL_GPIO_WritePin(BOARD_LED_GPIO_Port, BOARD_LED_Pin, GPIO_PIN_SET);
+    hm10.receiveCompleted();
   }
 }
 /* USER CODE END Application */
