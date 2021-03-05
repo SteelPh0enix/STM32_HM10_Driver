@@ -127,19 +127,19 @@ void StartMainTask(void* argument) {
   }
 
   bool isAlive { false };
-  while (true) {
+  while (!isAlive) {
     isAlive = hm10.isAlive();
     printf("Is alive? %s\n", (hm10.isAlive() ? "yes" : "no"));
     osDelay(100);
   }
 
-//  hm10.factoryReset();
-//
-//  printf("Is alive after factory reboot? %s\n", (hm10.isAlive() ? "yes" : "no"));
-//
-//  hm10.setBaudRate(HM10::Baudrate::Baud230400);
-//
-//  printf("Is alive after baudrate change? %s\n", (hm10.isAlive() ? "yes" : "no"));
+  hm10.factoryReset();
+
+  printf("Is alive after factory reboot? %s\n", (hm10.isAlive() ? "yes" : "no"));
+
+  hm10.setBaudRate(HM10::Baudrate::Baud230400);
+
+  printf("Is alive after baudrate change? %s\n", (hm10.isAlive() ? "yes" : "no"));
 
   for (;;) {
     osDelay(1);

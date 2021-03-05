@@ -51,9 +51,9 @@
 #define HM10_DEBUG_MODE
 #ifdef HM10_DEBUG_MODE
 #include "printf.h"
-#define debugLog printf
+#define debugLog(format, ...) printf(format, ## __VA_ARGS__)
 #else
-#define debugLog
+#define debugLog(...)
 #endif
 
 namespace HM10 {
