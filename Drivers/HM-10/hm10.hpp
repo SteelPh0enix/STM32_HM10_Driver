@@ -48,14 +48,6 @@
 #define platformDelay HAL_Delay
 #endif
 
-#define HM10_DEBUG_MODE
-#ifdef HM10_DEBUG_MODE
-#include "printf.h"
-#define debugLog(format, ...) printf(format, ## __VA_ARGS__)
-#else
-#define debugLog(...)
-#endif
-
 namespace HM10 {
 
 class HM10 {

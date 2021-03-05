@@ -6,6 +6,7 @@
  */
 
 #include "hm10.hpp"
+#include "hm10_debug.hpp"
 #include <cstring>
 #include "printf.h"
 
@@ -32,7 +33,7 @@ std::size_t HM10::bufferSize() const {
 }
 
 int HM10::initialize() {
-  debugLog("HM10 init...\n");
+  debugLog("Init started");
   __HAL_UART_ENABLE_IT(UART(), UART_IT_IDLE);
   return HAL_UART_Receive_DMA(UART(), reinterpret_cast<uint8_t*>(&m_rxBuffer[0]), bufferSize());
 }
@@ -64,7 +65,7 @@ void HM10::receiveCompleted() {
     m_messageLength = messagePrefixLength + messageSuffixLength;
   }
 
-  debugLog("Message received, length: %d, data: %s\n", m_messageLength, m_messageBuffer);
+  debugLogLL("Message received, length: %d, data: %s", m_messageLength, m_messageBuffer);
   m_msgStartPtr = messageEndPtr;
   m_rxInProgress = false;
 }
@@ -103,32 +104,31 @@ bool HM10::reboot(bool waitForStartup) {
     return false;
   }
 
-  debugLog("[reboot] response: %s\n", m_messageBuffer);
+  debugLog("Response: %s", m_messageBuffer);
 
   if (m_factoryRebootPending) {
     std::uint32_t const newBaudrate = BaudrateValues[static_cast<std::uint8_t>(DefaultBaudrate)];
-    debugLog("[reboot] Factory reboot in progress, resetting UART baudrate to default (%d)\n",
-             newBaudrate);
+    debugLog("Factory reboot in progress, resetting UART baudrate to default (%d)", newBaudrate);
     setUARTBaudrate(newBaudrate);
     m_currentBaudrate = DefaultBaudrate;
     m_newBaudrate = DefaultBaudrate;
     m_factoryRebootPending = false;
   } else if (m_currentBaudrate != m_newBaudrate) {
     std::uint32_t const newBaudrate = BaudrateValues[static_cast<std::uint8_t>(m_newBaudrate)];
-    debugLog("[reboot] rebooting after changing baud, new baud = %d\n", newBaudrate);
+    debugLog("Rebooting after changing baud, new baud = %d", newBaudrate);
     setUARTBaudrate(newBaudrate);
     m_currentBaudrate = m_newBaudrate;
   }
 
   if (waitForStartup) {
     platformDelay(800); // should be booted up at this point
-    debugLog("[reboot] starting check-alive loop\n");
+    debugLog("Starting check-alive loop");
     while (!isAlive()) {
       platformDelay(100);
     }
   }
 
-  debugLog("[reboot] Reboot successfull!\n");
+  debugLog("Reboot successfull!");
   return true;
 }
 
@@ -168,7 +168,7 @@ Baudrate HM10::baudRate() {
 
 int HM10::transmitBuffer() {
   m_txInProgress = true;
-//  debugLog("[TX] %s\n", m_utilityBuffer);
+  debugLogLL("Transmitting %s", m_txBuffer);
   int transmit_result = HAL_UART_Transmit_DMA(UART(),
                                               reinterpret_cast<uint8_t*>(&m_txBuffer[0]),
                                               m_txDataLength);
@@ -214,12 +214,12 @@ bool HM10::transmitAndReceive(std::uint32_t rx_wait_time) {
   startReceivingToBuffer();
 
   if (transmitBuffer() != 0) {
-    debugLog("[TxRx] TX error\n");
+    debugLogLL("TX error");
     return false;
   }
 
   if (waitForReceiveCompletion(rx_wait_time) == false) {
-    debugLog("[TxRx] RX timeout\n");
+    debugLogLL("RX timeout");
     return false;
   }
 
