@@ -29,6 +29,7 @@
 #include "printf.h"
 #include "usart.h"
 #include <hm10.hpp>
+#include <cstring>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +60,9 @@ osThreadAttr_t const mainTask_attributes = { .name = "mainTask", .stack_size = 5
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-
+void testFactoryReset();
+void testBaudRate(HM10::Baudrate new_baud = HM10::Baudrate::Baud230400);
+void testMACAddress(char const* new_mac = "");
 /* USER CODE END FunctionPrototypes */
 
 void StartMainTask(void* argument);
@@ -133,14 +136,12 @@ void StartMainTask(void* argument) {
     osDelay(100);
   }
 
-  hm10.factoryReset();
+  printf("===== TESTS STARTING =====\n");
+//  testFactoryReset();
+//  testBaudRate();
+  testMACAddress();
 
-  printf("Is alive after factory reboot? %s\n", (hm10.isAlive() ? "yes" : "no"));
-
-  hm10.setBaudRate(HM10::Baudrate::Baud230400);
-
-  printf("Is alive after baudrate change? %s\n", (hm10.isAlive() ? "yes" : "no"));
-
+  printf("===== TESTS DONE! =====\n");
   for (;;) {
     osDelay(1);
   }
@@ -174,6 +175,29 @@ extern "C" void HM10_UART_HandleIdleLine() {
     __HAL_UART_CLEAR_IDLEFLAG(&HM10_UART);
     HAL_GPIO_WritePin(BOARD_LED_GPIO_Port, BOARD_LED_Pin, GPIO_PIN_SET);
     hm10.receiveCompleted();
+  }
+}
+
+void testFactoryReset() {
+  hm10.factoryReset();
+  printf("Is alive after factory reboot? %s\n", (hm10.isAlive() ? "yes" : "no"));
+}
+
+void testBaudRate(HM10::Baudrate new_baud) {
+  hm10.setBaudRate(new_baud);
+
+  printf("Is alive after baudrate change? %s\n", (hm10.isAlive() ? "yes" : "no"));
+}
+
+void testMACAddress(char const* new_mac) {
+  char mac[13];
+  hm10.macAddress(mac);
+  printf("Current MAC address: %s\n", mac);
+
+  if (std::strlen(new_mac) == 12) {
+    hm10.setMACAddress(new_mac);
+    hm10.macAddress(mac);
+    printf("New MAC address: %s\n", mac);
   }
 }
 /* USER CODE END Application */

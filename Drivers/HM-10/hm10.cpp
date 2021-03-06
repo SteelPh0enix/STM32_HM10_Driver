@@ -164,6 +164,30 @@ Baudrate HM10::baudRate() {
   return m_currentBaudrate;
 }
 
+bool HM10::macAddress(char* mac_buffer) {
+  copyCommandToBuffer("AT+ADDR?");
+  if (!transmitAndReceive()) {
+    return false;
+  }
+
+  if (!compareWithResponse("OK+ADDR")) {
+    return false;
+  }
+
+  // omitting OK+ADDR: with + 8
+  std::strcpy(mac_buffer, m_messageBuffer + 8);
+  return true;
+}
+
+bool HM10::setMACAddress(char const* address) {
+  m_txDataLength = sprintf(m_txBuffer, "AT+ADDR%s", address);
+  if (!transmitAndReceive()) {
+    return false;
+  }
+
+  return compareWithResponse("OK+SET");
+}
+
 // ===== Private/low-level/utility functions ===== //
 
 int HM10::transmitBuffer() {

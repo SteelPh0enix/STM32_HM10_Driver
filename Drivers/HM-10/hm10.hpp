@@ -101,6 +101,12 @@ public:
   // Gets the baudrate from HM-10
   Baudrate baudRate();
 
+  // Get the MAC address of the module, requires at least 13-byte buffer (12 bytes of MAC and terminator)
+  bool macAddress(char* mac_buffer);
+
+  // Set the MAC address of the module
+  bool setMACAddress(char const* address);
+
 private:
   int transmitBuffer();
   void waitForTransmitCompletion() const;
