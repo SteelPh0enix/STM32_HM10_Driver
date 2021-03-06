@@ -8,6 +8,7 @@
 #include "hm10.hpp"
 #include "hm10_debug.hpp"
 #include <cstring>
+#include <cstdlib>
 #include "printf.h"
 
 namespace HM10 {
@@ -164,28 +165,53 @@ Baudrate HM10::baudRate() {
   return m_currentBaudrate;
 }
 
-bool HM10::macAddress(char* mac_buffer) {
+MACAddress HM10::macAddress() {
+  MACAddress addr { };
+
   copyCommandToBuffer("AT+ADDR?");
   if (!transmitAndReceive()) {
-    return false;
+    return addr;
   }
 
   if (!compareWithResponse("OK+ADDR")) {
-    return false;
+    return addr;
   }
 
   // omitting OK+ADDR: with + 8
-  std::strcpy(mac_buffer, m_messageBuffer + 8);
-  return true;
+  std::strcpy(addr.address, m_messageBuffer + 8);
+  return addr;
 }
 
-bool HM10::setMACAddress(char const* address) {
+void HM10::setMACAddress(char const* address) {
   m_txDataLength = sprintf(m_txBuffer, "AT+ADDR%s", address);
   if (!transmitAndReceive()) {
-    return false;
+    return;
   }
 
-  return compareWithResponse("OK+SET");
+  compareWithResponse("OK+Set");
+}
+
+AdvertInterval HM10::advertisingInterval() {
+  copyCommandToBuffer("AT+ADVI?");
+  if (!transmitAndReceive()) {
+    return AdvertInterval::InvalidInterval;
+  }
+
+  if (!compareWithResponse("OK+Get")) {
+    return AdvertInterval::InvalidInterval;
+  }
+
+  char* end;
+  return static_cast<AdvertInterval>(std::strtol(m_messageBuffer + 7, &end, 16));
+}
+
+void HM10::setAdvertisingInterval(AdvertInterval interval) {
+  m_txDataLength = sprintf(m_txBuffer, "AT+ADVI%01X", static_cast<std::uint8_t>(interval));
+  if (!transmitAndReceive()) {
+    return;
+  }
+
+  compareWithResponse("OK+Set");
 }
 
 // ===== Private/low-level/utility functions ===== //

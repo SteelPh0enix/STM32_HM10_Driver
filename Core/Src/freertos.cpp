@@ -63,6 +63,8 @@ osThreadAttr_t const mainTask_attributes = { .name = "mainTask", .stack_size = 5
 void testFactoryReset();
 void testBaudRate(HM10::Baudrate new_baud = HM10::Baudrate::Baud230400);
 void testMACAddress(char const* new_mac = "");
+void testAdvertisingInterval(HM10::AdvertInterval new_interval =
+    HM10::AdvertInterval::Adv546p25ms);
 /* USER CODE END FunctionPrototypes */
 
 void StartMainTask(void* argument);
@@ -137,9 +139,11 @@ void StartMainTask(void* argument) {
   }
 
   printf("===== TESTS STARTING =====\n");
+
 //  testFactoryReset();
 //  testBaudRate();
   testMACAddress();
+  testAdvertisingInterval();
 
   printf("===== TESTS DONE! =====\n");
   for (;;) {
@@ -190,14 +194,22 @@ void testBaudRate(HM10::Baudrate new_baud) {
 }
 
 void testMACAddress(char const* new_mac) {
-  char mac[13];
-  hm10.macAddress(mac);
-  printf("Current MAC address: %s\n", mac);
+  HM10::MACAddress address = hm10.macAddress();
+  printf("Current MAC address: %s\n", address.address);
 
   if (std::strlen(new_mac) == 12) {
     hm10.setMACAddress(new_mac);
-    hm10.macAddress(mac);
-    printf("New MAC address: %s\n", mac);
+    address = hm10.macAddress();
+    printf("New MAC address: %s\n", address.address);
+  }
+}
+
+void testAdvertisingInterval(HM10::AdvertInterval new_interval) {
+  printf("Current adv interval: 0x%01X\n", hm10.advertisingInterval());
+
+  if (new_interval != HM10::AdvertInterval::InvalidInterval) {
+    hm10.setAdvertisingInterval(new_interval);
+    printf("New adv interval: 0x%01X\n", hm10.advertisingInterval());
   }
 }
 /* USER CODE END Application */

@@ -102,10 +102,16 @@ public:
   Baudrate baudRate();
 
   // Get the MAC address of the module, requires at least 13-byte buffer (12 bytes of MAC and terminator)
-  bool macAddress(char* mac_buffer);
+  MACAddress macAddress();
 
   // Set the MAC address of the module
-  bool setMACAddress(char const* address);
+  void setMACAddress(char const* address);
+
+  // Get advertising interval
+  AdvertInterval advertisingInterval();
+
+  // Set advertising inverval
+  void setAdvertisingInterval(AdvertInterval interval);
 
 private:
   int transmitBuffer();
