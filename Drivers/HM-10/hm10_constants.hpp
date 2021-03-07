@@ -63,7 +63,7 @@ enum class AdvertInterval : std::uint8_t {
 };
 
 enum class AdvertType : std::uint8_t {
-  All = 0, OnlyConnectLastDevice = 1, OnlyAdvertAndScanResponse = 2, OnlyAdvert = 3
+  All = 0, OnlyConnectLastDevice = 1, OnlyAdvertAndScanResponse = 2, OnlyAdvert = 3, Invalid = 0xFF
 };
 
 }

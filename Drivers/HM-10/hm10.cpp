@@ -7,9 +7,11 @@
 
 #include "hm10.hpp"
 #include "hm10_debug.hpp"
+#include "printf.h"
+
 #include <cstring>
 #include <cstdlib>
-#include "printf.h"
+#include <cstdarg>
 
 namespace HM10 {
 
@@ -148,7 +150,7 @@ bool HM10::factoryReset(bool waitForStartup) {
 }
 
 bool HM10::setBaudRate(Baudrate new_baud, bool rebootImmediately, bool waitForStartup) {
-  m_txDataLength = sprintf(m_txBuffer, "AT+BAUD%d", static_cast<std::uint8_t>(new_baud));
+  copyCommandToBuffer("AT+BAUD%d", static_cast<std::uint8_t>(new_baud));
   if (!transmitAndReceive()) {
     return false;
   }
@@ -177,18 +179,18 @@ MACAddress HM10::macAddress() {
     return addr;
   }
 
-  // omitting OK+ADDR: with + 8
-  std::strcpy(addr.address, m_messageBuffer + 8);
+// omitting OK+ADDR: with + 8
+  copyStringFromResponse(8, addr.address);
   return addr;
 }
 
-void HM10::setMACAddress(char const* address) {
-  m_txDataLength = sprintf(m_txBuffer, "AT+ADDR%s", address);
+bool HM10::setMACAddress(char const* address) {
+  copyCommandToBuffer("AT+ADDR%s", address);
   if (!transmitAndReceive()) {
-    return;
+    return false;
   }
 
-  compareWithResponse("OK+Set");
+  return compareWithResponse("OK+Set");
 }
 
 AdvertInterval HM10::advertisingInterval() {
@@ -201,17 +203,50 @@ AdvertInterval HM10::advertisingInterval() {
     return AdvertInterval::InvalidInterval;
   }
 
-  char* end;
-  return static_cast<AdvertInterval>(std::strtol(m_messageBuffer + 7, &end, 16));
+  return static_cast<AdvertInterval>(extractNumberFromResponse(7, 16));
 }
 
-void HM10::setAdvertisingInterval(AdvertInterval interval) {
-  m_txDataLength = sprintf(m_txBuffer, "AT+ADVI%01X", static_cast<std::uint8_t>(interval));
+bool HM10::setAdvertisingInterval(AdvertInterval interval) {
+  copyCommandToBuffer("AT+ADVI%01X", static_cast<std::uint8_t>(interval));
   if (!transmitAndReceive()) {
-    return;
+    return false;
   }
 
-  compareWithResponse("OK+Set");
+  return compareWithResponse("OK+Set");
+}
+
+AdvertType HM10::advertisingType() {
+  copyCommandToBuffer("AT+ADTY?");
+  if (!transmitAndReceive()) {
+    return AdvertType::Invalid;
+  }
+
+  if (!compareWithResponse("OK+Get")) {
+    return AdvertType::Invalid;
+  }
+
+  return static_cast<AdvertType>(extractNumberFromResponse(7));
+}
+
+bool HM10::setAdvertisingType(AdvertType type) {
+  copyCommandToBuffer("AT+ADTY%d", static_cast<std::uint8_t>(type));
+  if (!transmitAndReceive()) {
+    return false;
+  }
+
+  return compareWithResponse("OK+Set");
+}
+
+bool HM10::whiteListEnabled() {
+  copyCommandToBuffer("AD+ALLO?");
+  if (!transmitAndReceive()) {
+    return false;
+  }
+
+  if (!compareWithResponse("OK+Get")) {
+    return false;
+  }
+
 }
 
 // ===== Private/low-level/utility functions ===== //
@@ -276,17 +311,28 @@ bool HM10::transmitAndReceive(std::uint32_t rx_wait_time) {
   return true;
 }
 
-void HM10::copyCommandToBuffer(char const* const command) {
-  std::strcpy(&m_txBuffer[0], command);
-  m_txDataLength = std::strlen(command);
-  m_txBuffer[m_txDataLength] = '\0';
+void HM10::copyCommandToBuffer(char const* const command, ...) {
+  std::va_list args;
+  va_start(args, command);
+
+  m_txDataLength = vsnprintf(&m_txBuffer[0], bufferSize(), command, args);
+
+  va_end(args);
 }
 
-bool HM10::compareWithResponse(char const* str) {
+bool HM10::compareWithResponse(char const* str) const {
   return std::strncmp(m_messageBuffer, str, std::strlen(str)) == 0;
 }
 
-void HM10::setUARTBaudrate(std::uint32_t new_baud) {
+long HM10::extractNumberFromResponse(std::size_t offset, int base) const {
+  return std::strtol(&m_messageBuffer[0] + offset, nullptr, base);
+}
+
+void HM10::copyStringFromResponse(std::size_t offset, char* destination) const {
+  std::strcpy(destination, &m_messageBuffer[0] + offset);
+}
+
+void HM10::setUARTBaudrate(std::uint32_t new_baud) const {
   UART()->Init.BaudRate = new_baud;
   HAL_UART_Init(UART());
 }

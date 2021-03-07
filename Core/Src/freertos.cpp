@@ -63,8 +63,7 @@ osThreadAttr_t const mainTask_attributes = { .name = "mainTask", .stack_size = 5
 void testFactoryReset();
 void testBaudRate(HM10::Baudrate new_baud = HM10::Baudrate::Baud230400);
 void testMACAddress(char const* new_mac = "");
-void testAdvertisingInterval(HM10::AdvertInterval new_interval =
-    HM10::AdvertInterval::Adv546p25ms);
+void testAdvertisingInterval(HM10::AdvertInterval new_interval = HM10::AdvertInterval::Adv546p25ms);
 /* USER CODE END FunctionPrototypes */
 
 void StartMainTask(void* argument);
@@ -140,8 +139,8 @@ void StartMainTask(void* argument) {
 
   printf("===== TESTS STARTING =====\n");
 
-//  testFactoryReset();
-//  testBaudRate();
+  testFactoryReset();
+  testBaudRate();
   testMACAddress();
   testAdvertisingInterval();
 

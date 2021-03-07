@@ -7,7 +7,7 @@
 
 /*
  * IMPORTANT: BEFORE YOU USE THIS LIBRARY, READ THIS
- * UPDATE YOUR HM-10 FIRMWARE BEFORE PLUGGING IT IN - THIS LIBRARY IS WRITTEN FOR V709
+ * UPDATE YOUR HM-10 FIRMWARE BEFORE PLUGGING IT IN - THIS LIBRARY IS TESTED UNDER FIRMWARE V709
  * YOU CAN DOWNLOAD THE FIRMWARE AND UPDATE INSTRUCTIONS HERE: http://jnhuamao.cn/download_rom_en.asp?id=1
  *
  * This lib is created for usage with DMA, interrupts and RTOS. To use it without DMA, and/or without interrupts,
@@ -52,8 +52,9 @@ namespace HM10 {
 
 class HM10 {
 public:
-  // for some reason, on the newest version of firmware (V709), default baud rate (after factory reset)
-  // is 115200, not 9600. Change it here if you'll have issues with that.
+  // V7xx firmware changed the default baudrate to 115200.
+  // If your module doesn't respond after first plug-in and check, make sure
+  // your firmware is updated.
   static constexpr Baudrate DefaultBaudrate { Baudrate::Baud115200 };
 
   HM10(UART_HandleTypeDef* uart);
@@ -105,13 +106,31 @@ public:
   MACAddress macAddress();
 
   // Set the MAC address of the module
-  void setMACAddress(char const* address);
+  bool setMACAddress(char const* address);
 
   // Get advertising interval
   AdvertInterval advertisingInterval();
 
   // Set advertising inverval
-  void setAdvertisingInterval(AdvertInterval interval);
+  bool setAdvertisingInterval(AdvertInterval interval);
+
+  // Get advertising type
+  AdvertType advertisingType();
+
+  // Set advertising type
+  bool setAdvertisingType(AdvertType type);
+
+  // Get whitelist status
+  bool whiteListEnabled();
+
+  // Set whitelist status
+  bool setWhiteListStatus(bool status);
+
+  // Get whitelisted MAC address. HM-10 can have up to 3 addresses on whitelist, counting from 1.
+  MACAddress whiteListedMAC(std::uint8_t id);
+
+  // Get whitelisted MAC address. HM-10 can have up to 3 addresses on whitelist, counting from 1.
+  bool setWhitelistedMAC(std::uint8_t id, char const* address);
 
 private:
   int transmitBuffer();
@@ -124,10 +143,12 @@ private:
 
   bool transmitAndReceive(std::uint32_t rx_wait_time = 1000);
 
-  void copyCommandToBuffer(char const* const command);
-  bool compareWithResponse(char const* str);
+  void copyCommandToBuffer(char const* const commandPattern, ...);
+  bool compareWithResponse(char const* str) const;
+  long extractNumberFromResponse(std::size_t offset, int base = 10) const;
+  void copyStringFromResponse(std::size_t offset, char* destination) const;
 
-  void setUARTBaudrate(std::uint32_t new_baud);
+  void setUARTBaudrate(std::uint32_t new_baud) const;
 
   UART_HandleTypeDef* m_uart { nullptr };
 
