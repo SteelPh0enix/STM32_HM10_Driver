@@ -64,6 +64,7 @@ void testFactoryReset();
 void testBaudRate(HM10::Baudrate new_baud = HM10::Baudrate::Baud230400);
 void testMACAddress(char const* new_mac = "");
 void testAdvertisingInterval(HM10::AdvertInterval new_interval = HM10::AdvertInterval::Adv546p25ms);
+void testMACWhitelist();
 /* USER CODE END FunctionPrototypes */
 
 void StartMainTask(void* argument);
@@ -139,10 +140,11 @@ void StartMainTask(void* argument) {
 
   printf("===== TESTS STARTING =====\n");
 
-  testFactoryReset();
-  testBaudRate();
-  testMACAddress();
-  testAdvertisingInterval();
+//  testFactoryReset();
+//  testBaudRate();
+//  testMACAddress();
+//  testAdvertisingInterval();
+  testMACWhitelist();
 
   printf("===== TESTS DONE! =====\n");
   for (;;) {
@@ -210,6 +212,24 @@ void testAdvertisingInterval(HM10::AdvertInterval new_interval) {
     hm10.setAdvertisingInterval(new_interval);
     printf("New adv interval: 0x%01X\n", hm10.advertisingInterval());
   }
+}
+
+void testMACWhitelist() {
+  printf("Current MAC whitelist state: %s\n", hm10.whiteListEnabled() ? "On" : "Off");
+  hm10.setWhiteListState(true);
+  printf("New MAC whitelist state: %s\n", hm10.whiteListEnabled() ? "On" : "Off");
+  hm10.setWhiteListState(false);
+
+  for (int i = 1; i < 3; i++) {
+    printf("Whitelisted MAC #%d: %s\n", i, hm10.whiteListedMAC(i).address);
+  };
+  hm10.setWhitelistedMAC(1, "AABBCCDDEEFF");
+  hm10.setWhitelistedMAC(2, "112233445566");
+
+  printf("Whitelisted MACs set!\n");
+  for (int i = 1; i < 3; i++) {
+    printf("Whitelisted MAC #%d: %s\n", i, hm10.whiteListedMAC(i).address);
+  };
 }
 /* USER CODE END Application */
 

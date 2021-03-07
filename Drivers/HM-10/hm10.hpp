@@ -123,8 +123,8 @@ public:
   // Get whitelist status
   bool whiteListEnabled();
 
-  // Set whitelist status
-  bool setWhiteListStatus(bool status);
+  // Enable or disable whitelist
+  bool setWhiteListState(bool status);
 
   // Get whitelisted MAC address. HM-10 can have up to 3 addresses on whitelist, counting from 1.
   MACAddress whiteListedMAC(std::uint8_t id);
