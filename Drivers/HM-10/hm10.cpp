@@ -225,7 +225,7 @@ AdvertType HM10::advertisingType() {
     return AdvertType::Invalid;
   }
 
-  return static_cast<AdvertType>(extractNumberFromResponse(7));
+  return static_cast<AdvertType>(extractNumberFromResponse());
 }
 
 bool HM10::setAdvertisingType(AdvertType type) {
@@ -247,6 +247,16 @@ bool HM10::whiteListEnabled() {
     return false;
   }
 
+  return static_cast<bool>(extractNumberFromResponse());
+}
+
+bool HM10::setWhiteListStatus(bool status) {
+  copyCommandToBuffer("AD+ALLO%d", (status ? 1 : 0));
+  if (!transmitAndReceive()) {
+    return false;
+  }
+
+  return compareWithResponse("OK+Set");
 }
 
 // ===== Private/low-level/utility functions ===== //

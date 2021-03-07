@@ -145,7 +145,8 @@ private:
 
   void copyCommandToBuffer(char const* const commandPattern, ...);
   bool compareWithResponse(char const* str) const;
-  long extractNumberFromResponse(std::size_t offset, int base = 10) const;
+  // Most of the command responses are OK+Get: so the default offset it 7
+  long extractNumberFromResponse(std::size_t offset = 7, int base = 10) const;
   void copyStringFromResponse(std::size_t offset, char* destination) const;
 
   void setUARTBaudrate(std::uint32_t new_baud) const;
