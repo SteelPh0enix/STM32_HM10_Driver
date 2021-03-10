@@ -90,4 +90,13 @@ enum class ConnSupervisionTimeout : std::uint8_t {
   Timeout6000ms = 6,
   InvalidTimeout = 0xFF
 };
+
+enum class CharsAmount : std::uint8_t {
+  SingleChar = 0, SecondCharNext = 1, SecondCharBefore = 2, Invalid = 0xFF
+};
+
+enum class WorkMode : std::uint8_t {
+  Transmission = 0, PIOAndTransmission = 1, RemoteAndTransmission = 2, Invalid = 0xFF
+};
+
 }

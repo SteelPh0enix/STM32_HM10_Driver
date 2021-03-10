@@ -148,17 +148,20 @@ bool HM10::factoryReset(bool waitForStartup) {
 }
 
 bool HM10::setBaudRate(Baudrate new_baud, bool rebootImmediately, bool waitForStartup) {
-  copyCommandToBuffer("AT+BAUD%d", static_cast<std::uint8_t>(new_baud));
-  if (!transmitAndReceive()) {
-    return false;
-  }
+  if (new_baud != Baudrate::InvalidBaudrate) {
+    copyCommandToBuffer("AT+BAUD%d", static_cast<std::uint8_t>(new_baud));
+    if (!transmitAndReceive()) {
+      return false;
+    }
 
-  m_newBaudrate = new_baud;
+    m_newBaudrate = new_baud;
 
-  if (rebootImmediately) {
-    return reboot(waitForStartup);
+    if (rebootImmediately) {
+      return reboot(waitForStartup);
+    }
+    return compareWithResponse("OK+SET");
   }
-  return compareWithResponse("OK+SET");
+  return false;
 }
 
 Baudrate HM10::baudRate() {
@@ -191,8 +194,11 @@ AdvertInterval HM10::advertisingInterval() {
 }
 
 bool HM10::setAdvertisingInterval(AdvertInterval interval) {
-  debugLog("Setting advertising interval to %d", static_cast<uint8_t>(interval));
-  return transmitAndCheckResponse("OK+Set", "AT+ADVI%01X", static_cast<std::uint8_t>(interval));
+  if (interval != AdvertInterval::InvalidInterval) {
+    debugLog("Setting advertising interval to %d", static_cast<uint8_t>(interval));
+    return transmitAndCheckResponse("OK+Set", "AT+ADVI%01X", static_cast<std::uint8_t>(interval));
+  }
+  return false;
 }
 
 AdvertType HM10::advertisingType() {
@@ -204,8 +210,11 @@ AdvertType HM10::advertisingType() {
 }
 
 bool HM10::setAdvertisingType(AdvertType type) {
-  debugLog("Setting advertising type to %d", static_cast<std::uint8_t>(type));
-  return transmitAndCheckResponse("OK+Set", "AT+ADTY%d", static_cast<std::uint8_t>(type));
+  if (type != AdvertType::Invalid) {
+    debugLog("Setting advertising type to %d", static_cast<std::uint8_t>(type));
+    return transmitAndCheckResponse("OK+Set", "AT+ADTY%d", static_cast<std::uint8_t>(type));
+  }
+  return false;
 }
 
 bool HM10::whiteListEnabled() {
@@ -251,8 +260,11 @@ ConnInterval HM10::minimumConnectionInterval() {
 }
 
 bool HM10::setMinimumConnectionInterval(ConnInterval interval) {
-  debugLog("Setting minimum connection interval to %d", interval);
-  return transmitAndCheckResponse("OK+Set", "AT+COMI%d", static_cast<std::uint8_t>(interval));
+  if (interval != ConnInterval::InvalidInterval) {
+    debugLog("Setting minimum connection interval to %d", interval);
+    return transmitAndCheckResponse("OK+Set", "AT+COMI%d", static_cast<std::uint8_t>(interval));
+  }
+  return false;
 }
 
 ConnInterval HM10::maximumConnectionInterval() {
@@ -264,8 +276,11 @@ ConnInterval HM10::maximumConnectionInterval() {
 }
 
 bool HM10::setMaximumConnectionInterval(ConnInterval interval) {
-  debugLog("Setting maximum connection interval to %d", interval);
-  return transmitAndCheckResponse("OK+Set", "AT+COMA%d", static_cast<std::uint8_t>(interval));
+  if (interval != ConnInterval::InvalidInterval) {
+    debugLog("Setting maximum connection interval to %d", interval);
+    return transmitAndCheckResponse("OK+Set", "AT+COMA%d", static_cast<std::uint8_t>(interval));
+  }
+  return false;
 }
 
 int HM10::connectionSlaveLatency() {
@@ -294,8 +309,11 @@ ConnSupervisionTimeout HM10::connectionSupervisionTimeout() {
 }
 
 bool HM10::setConnectionSupervisionTimeout(ConnSupervisionTimeout timeout) {
-  debugLog("Setting connection supervision timeout to %d", static_cast<std::uint8_t>(timeout));
-  return transmitAndCheckResponse("OK+Set", "AT+COSU%d", static_cast<std::uint8_t>(timeout));
+  if (timeout != ConnSupervisionTimeout::InvalidTimeout) {
+    debugLog("Setting connection supervision timeout to %d", static_cast<std::uint8_t>(timeout));
+    return transmitAndCheckResponse("OK+Set", "AT+COSU%d", static_cast<std::uint8_t>(timeout));
+  }
+  return false;
 }
 
 bool HM10::updateConnection() {
@@ -352,6 +370,72 @@ bool HM10::notificationsWithAddress() {
 bool HM10::setNotificationsWithAddressState(bool enabled) {
   debugLog("Setting notifications with address to %s", (enabled ? "true" : "false"));
   return transmitAndCheckResponse("OK+Set", "AT+NOTP%d", (enabled ? 1 : 0));
+}
+
+bool HM10::clearLastConnected() {
+  return transmitAndCheckResponse("OK+CLEAR", "AT+CLEAR");
+}
+
+bool HM10::removeBondInformation() {
+  return transmitAndCheckResponse("OK+ERASE", "AT+ERASE");
+}
+
+CharsAmount HM10::getCharacteristicsAmount() {
+  debugLog("Getting characteristics amount");
+  if (transmitAndCheckResponse("OK+Get", "AT+FFE2?")) {
+    return static_cast<CharsAmount>(extractNumberFromResponse());
+  }
+  return CharsAmount::Invalid;
+}
+
+bool HM10::setCharacteristicsAmount(CharsAmount amount) {
+  if (amount != CharsAmount::Invalid) {
+    debugLog("Setting characteristics amount to %d", static_cast<int>(amount));
+    return transmitAndCheckResponse("OK+Set", "AT+FFE2%d", static_cast<std::uint8_t>(amount));
+  }
+  return false;
+}
+
+bool HM10::rxGain() {
+  debugLog("Getting RX gain");
+  if (transmitAndCheckResponse("OK+Get", "AT+GAIN?")) {
+    return static_cast<bool>(extractNumberFromResponse());
+  }
+  return false;
+}
+
+bool HM10::setRXGain(bool open) {
+  debugLog("Setting RX gain to %s", (open ? "enabled" : "disabled"));
+  return transmitAndCheckResponse("OK+Set", "AT+GAIN%d", (open ? 1 : 0));
+}
+
+bool HM10::automaticMode() {
+  debugLog("Checking if module is working in auto mode");
+  if (transmitAndCheckResponse("OK+Get", "AT+IMME?")) {
+    return static_cast<bool>(extractNumberFromResponse() == 0);
+  }
+  return false;
+}
+
+bool HM10::setAutomaticMode(bool enabled) {
+  debugLog("Setting auto mode to %s", (enabled ? "enabled" : "disabled"));
+  return transmitAndCheckResponse("OK+Set", "AT+IMME%d", (enabled ? 0 : 1));
+}
+
+WorkMode HM10::workMode() {
+  debugLog("Checking work mode");
+  if (transmitAndCheckResponse("OK+Get", "AT+MODE?")) {
+    return static_cast<WorkMode>(extractNumberFromResponse());
+  }
+  return WorkMode::Invalid;
+}
+
+bool HM10::setWorkMode(WorkMode new_mode) {
+  if (new_mode != WorkMode::Invalid) {
+    debugLog("Setting work mode to %d", static_cast<int>(new_mode));
+    return transmitAndCheckResponse("OK+Set", "AT+MODE%d", static_cast<std::uint8_t>(new_mode));
+  }
+  return false;
 }
 
 // ===== Private/low-level/utility functions ===== //

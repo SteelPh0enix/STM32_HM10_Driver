@@ -151,6 +151,33 @@ public:
   bool notificationsWithAddress();
   bool setNotificationsWithAddressState(bool enabled);
 
+  // Clear last connected device address
+  bool clearLastConnected();
+
+  // Remove bond information
+  bool removeBondInformation();
+
+  // Get/set characteristics amount.
+  // Second char can have address of `default char + 1` (SecondCharNext)
+  // or `default char - 1` (SecondCharBefore)
+  CharsAmount getCharacteristicsAmount();
+  bool setCharacteristicsAmount(CharsAmount amount);
+
+  // Get/set RX gain
+  bool rxGain();
+  bool setRXGain(bool open);
+
+  // Get/set automatic work mode state
+  // If enabled - module will start working immediatelly
+  // If disabled, it'll only respond to AT and the comms will have to be
+  // handled manually
+  bool automaticMode();
+  bool setAutomaticMode(bool enabled);
+
+  // Get/set work mode
+  WorkMode workMode();
+  bool setWorkMode(WorkMode new_mode);
+
 private:
   int transmitBuffer();
   void waitForTransmitCompletion() const;
