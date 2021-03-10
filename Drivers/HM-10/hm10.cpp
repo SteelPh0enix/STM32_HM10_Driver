@@ -469,11 +469,134 @@ bool HM10::setOutputPower(OutputPower new_power) {
 }
 
 std::uint32_t HM10::password() {
+  debugLog("Getting the pairing password");
+  if (transmitAndCheckResponse("OK+Get", "AT+PASS?")) {
+    return static_cast<std::uint32_t>(extractNumberFromResponse());
+  }
 
+  return std::uint32_t { };
 }
 
-bool HM10::setPassword(std::uint32_t new_pin) {
+bool HM10::setPassword(std::uint32_t new_pass) {
+  if (new_pass <= 999999) {
+    debugLog("Setting the password to %06d", new_pass);
+    return transmitAndCheckResponse("OK+Set", "AT+PASS%06d", new_pass);
+  }
+  return false;
+}
 
+ModulePower HM10::modulePower() {
+  debugLog("Getting module power");
+  if (transmitAndCheckResponse("OK+Get", "AT+POWE?")) {
+    return static_cast<ModulePower>(extractNumberFromResponse());
+  }
+  return ModulePower::Invalid;
+}
+
+bool HM10::setModulePower(ModulePower new_power) {
+  if (new_power != ModulePower::Invalid) {
+    debugLog("Setting module power to %d", static_cast<std::uint8_t>(new_power));
+    return transmitAndCheckResponse("OK+Set", "AT+POWE%d", static_cast<std::uint8_t>(new_power));
+  }
+  return false;
+}
+
+bool HM10::autoSleep() {
+  debugLog("Checking auto sleep state");
+  if (transmitAndCheckResponse("OK+Get", "AT+PWRM?")) {
+    return static_cast<bool>(extractNumberFromResponse());
+  }
+  return false;
+}
+
+bool HM10::setAutoSleep(bool enabled) {
+  debugLog("Setting auto sleep state to %s", (enabled ? "enabled" : "disabled"));
+  return transmitAndCheckResponse("OK+Set", "AT+PWRM%d", (enabled ? 0 : 1));
+}
+
+bool HM10::reliableAdvertising() {
+  debugLog("Checking reliable advertising mode");
+  if (transmitAndCheckResponse("OK+Get", "AT+RELI?")) {
+    return static_cast<bool>(extractNumberFromResponse());
+  }
+  return false;
+}
+
+bool HM10::setReliableAdvertising(bool enabled) {
+  debugLog("Setting reliable advertising mode to %s", (enabled ? "enabled" : "disabled"));
+  return transmitAndCheckResponse("OK+Set", "AT+RELI%d", (enabled ? 1 : 0));
+}
+
+Role HM10::role() {
+  debugLog("Getting device role");
+  if (transmitAndCheckResponse("OK+Get", "AT+ROLE?")) {
+    return static_cast<Role>(extractNumberFromResponse());
+  }
+  return Role::Invalid;
+}
+
+bool HM10::setRole(Role new_role) {
+  debugLog("Setting device role to %d", static_cast<int>(new_role));
+  return transmitAndCheckResponse("OK+Set", "AT+ROLE%d", static_cast<std::uint8_t>(new_role));
+}
+
+bool HM10::start() {
+  debugLog("Starting the module");
+  return transmitAndCheckResponse("OK+START", "AT+START");
+}
+
+bool HM10::sleep() {
+  debugLog("Putting the module into sleep mode");
+  return transmitAndCheckResponse("OK+SLEEP", "AT+SLEEP");
+}
+
+bool HM10::wakeUp() {
+  debugLog("Waking the module up");
+  return transmitAndCheckResponse("OK+WAKE", "WAKEUP");
+}
+
+BondMode HM10::bondingMode() {
+  debugLog("Checking bonding mode");
+  if (transmitAndCheckResponse("OK+Get", "AT+TYPE?")) {
+    return static_cast<BondMode>(extractNumberFromResponse());
+  }
+  return BondMode::Invalid;
+}
+
+bool HM10::setBondingMode(BondMode new_mode) {
+  if (new_mode != BondMode::Invalid) {
+    debugLog("Setting bonding mode to %d", static_cast<int>(new_mode));
+    return transmitAndCheckResponse("OK+Set", "AT+TYPE%d", static_cast<std::uint8_t>(new_mode));
+  }
+  return false;
+}
+
+bool HM10::uartShutdownOnSleep() {
+  debugLog("Checking if UART will shutdown on sleep");
+  if (transmitAndCheckResponse("OK+Get", "AT+UART?")) {
+    return static_cast<bool>(extractNumberFromResponse());
+  }
+  return false;
+}
+
+bool HM10::setUARTShutdownOnSleep(bool state) {
+  debugLog("Setting UART shutdown on sleep to %s", (state ? "enabled" : "disabled"));
+  return transmitAndCheckResponse("OK+Set", "AT+UART%d", (state ? 1 : 0));
+}
+
+bool HM10::setAdvertisementData(char* data) {
+  debugLog("Setting advertisement data to %s", data);
+  return transmitAndCheckResponse("OK+Set", "AT+PACK%s", data);
+}
+
+Version HM10::firmwareVersion() {
+  Version ver { };
+  debugLog("Getting firmware version");
+  copyCommandToBuffer("AT+VERR?");
+  if (transmitAndReceive()) {
+    copyStringFromResponse(0, ver.version);
+  }
+  return ver;
 }
 
 // ===== Private/low-level/utility functions ===== //

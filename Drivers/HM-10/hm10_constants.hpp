@@ -106,4 +106,24 @@ struct DeviceName {
 enum class OutputPower : std::uint8_t {
   Normal = 0, Max = 1, Invalid = 0xFF
 };
+
+// Very low = -23dBm
+// Low = -6dBm
+// Normal = 0dBm
+// High = 6dBm
+enum class ModulePower : std::uint8_t {
+  VeryLow = 0, Low = 1, Normal = 2, High = 3, Invalid = 0xFF
+};
+
+enum class Role : std::uint8_t {
+  Peripheral = 0, Central = 1, Invalid = 0xFF
+};
+
+enum class BondMode : std::uint8_t {
+  NoPin = 0, AuthNoPin = 1, AuthWithPin = 2, AuthAndBond = 3, Invalid = 0xFF
+};
+
+struct Version {
+  char version[8];
+};
 }

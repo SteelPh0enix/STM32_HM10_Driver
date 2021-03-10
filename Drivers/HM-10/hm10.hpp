@@ -189,7 +189,50 @@ public:
   // Get/set password. NOTE: password for the module will always have leading zero's
   // filling it to 6 numbers. So, for example, setting 1234 as pin will make it 001234
   std::uint32_t password();
-  bool setPassword(std::uint32_t new_pin);
+  bool setPassword(std::uint32_t new_pass);
+
+  // Get/set module power
+  ModulePower modulePower();
+  bool setModulePower(ModulePower new_power);
+
+  // Get/set module sleep type
+  bool autoSleep();
+  bool setAutoSleep(bool enabled);
+
+  // Get/set reliable advertising mode state
+  bool reliableAdvertising();
+  bool setReliableAdvertising(bool enabled);
+
+  // Get/set device role
+  Role role();
+  bool setRole(Role new_role);
+
+  // Switch to auto work state
+  bool start();
+
+  // Make module go to sleep
+  bool sleep();
+
+  // Wake the module up
+  bool wakeUp();
+
+  // Get/set the bonding mode
+  BondMode bondingMode();
+  bool setBondingMode(BondMode new_mode);
+
+  // Get/set the service UUID value
+  std::uint16_t serviceUUID();
+  bool setServiceUUID(std::uint16_t new_uuid);
+
+  // Get/set UART sleep type (if it'll shut down when module is sleeping)
+  bool uartShutdownOnSleep();
+  bool setUARTShutdownOnSleep(bool state);
+
+  // Set module advertisement data (max 12-byte hex string)
+  bool setAdvertisementData(char* data);
+
+  // Get firmware version
+  Version firmwareVersion();
 
 private:
   int transmitBuffer();
