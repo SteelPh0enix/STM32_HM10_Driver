@@ -55,8 +55,11 @@ HM10::HM10 hm10(&HM10_UART);
 /* USER CODE END Variables */
 /* Definitions for mainTask */
 osThreadId_t mainTaskHandle;
-osThreadAttr_t const mainTask_attributes = { .name = "mainTask", .stack_size = 512 * 4, .priority =
-    (osPriority_t) osPriorityNormal, };
+const osThreadAttr_t mainTask_attributes = {
+  .name = "mainTask",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -77,15 +80,15 @@ void connectedCallback(HM10::MACAddress const& mac);
 void disconnectedCallback();
 /* USER CODE END FunctionPrototypes */
 
-void StartMainTask(void* argument);
+void StartMainTask(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
- * @brief  FreeRTOS initialization
- * @param  None
- * @retval None
- */
+  * @brief  FreeRTOS initialization
+  * @param  None
+  * @retval None
+  */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
@@ -128,7 +131,8 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartMainTask */
-void StartMainTask(void* argument) {
+void StartMainTask(void *argument)
+{
   /* USER CODE BEGIN StartMainTask */
 
   osDelay(1000);
