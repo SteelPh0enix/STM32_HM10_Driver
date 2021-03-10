@@ -100,7 +100,7 @@ enum class WorkMode : std::uint8_t {
 };
 
 struct DeviceName {
-  char name[12];
+  char name[13];
 };
 
 enum class OutputPower : std::uint8_t {
