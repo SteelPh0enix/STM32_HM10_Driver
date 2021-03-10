@@ -186,11 +186,11 @@ void StartMainTask(void* argument) {
   HM10::DeviceName name = hm10.name();
   printf("Name: %s\n", name.name);
 
-  hm10.setName("ruchansko");
+  hm10.setName("hm10test");
   name = hm10.name();
   printf("New name: %s\n", name.name);
 
-//  hm10.setPassword(213769);
+//  hm10.setPassword(123456);
 //  printf("Password: %06d\n", hm10.password());
 
   hm10.setServiceUUID(0xDEAD);
