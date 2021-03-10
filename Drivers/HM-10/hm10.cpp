@@ -7,8 +7,8 @@
 
 #include "hm10.hpp"
 #include "hm10_debug.hpp"
-#include "printf.h"
 
+#include <cstdio>
 #include <cstring>
 #include <cstdlib>
 
