@@ -65,6 +65,10 @@ void testBaudRate(HM10::Baudrate new_baud = HM10::Baudrate::Baud230400);
 void testMACAddress(char const* new_mac = "");
 void testAdvertisingInterval(HM10::AdvertInterval new_interval = HM10::AdvertInterval::Adv546p25ms);
 void testMACWhitelist();
+void testConnectionIntervals();
+void testSlaveLatency();
+void testSupervisionTimeout();
+void testConnectionUpdating();
 /* USER CODE END FunctionPrototypes */
 
 void StartMainTask(void* argument);
@@ -139,11 +143,15 @@ void StartMainTask(void* argument) {
 
   printf("===== TESTS STARTING =====\n");
 
-  testFactoryReset();
-  testBaudRate();
+//  testFactoryReset();
+//  testBaudRate();
 //  testMACAddress();
 //  testAdvertisingInterval();
 //  testMACWhitelist();
+//  testConnectionIntervals();
+//  testSlaveLatency();
+//  testSupervisionTimeout();
+//  testConnectionUpdating();
 
   printf("===== TESTS DONE! =====\n");
   for (;;) {
@@ -229,6 +237,38 @@ void testMACWhitelist() {
   for (int i = 1; i < 3; i++) {
     printf("Whitelisted MAC #%d: %s\n", i, hm10.whiteListedMAC(i).address);
   };
+}
+
+void testConnectionIntervals() {
+  printf("Current connection intervals: %d to %d\n",
+         static_cast<int>(hm10.minimumConnectionInterval()),
+         static_cast<int>(hm10.maximumConnectionInterval()));
+
+  hm10.setMinimumConnectionInterval(HM10::ConnInterval::Interval7p5ms);
+  hm10.setMaximumConnectionInterval(HM10::ConnInterval::Interval45ms);
+
+  printf("New connection intervals: %d to %d\n",
+         static_cast<int>(hm10.minimumConnectionInterval()),
+         static_cast<int>(hm10.maximumConnectionInterval()));
+}
+
+void testSlaveLatency() {
+  printf("Current slave latency: %d\n", hm10.connectionSlaveLatency());
+  hm10.setConnectionSlaveLatency(2);
+  printf("New slave latency: %d\n", hm10.connectionSlaveLatency());
+}
+
+void testSupervisionTimeout() {
+  printf("Current supervision timeout: %d\n",
+         static_cast<int>(hm10.connectionSupervisionTimeout()));
+  hm10.setConnectionSupervisionTimeout(HM10::ConnSupervisionTimeout::Timeout2000ms);
+  printf("New supervision timeout: %d\n", static_cast<int>(hm10.connectionSupervisionTimeout()));
+}
+
+void testConnectionUpdating() {
+  printf("Current connection updating status: %s\n", hm10.updateConnection() ? "true" : "false");
+  hm10.setConnectionUpdating(false);
+  printf("Current connection updating status: %s\n", hm10.updateConnection() ? "true" : "false");
 }
 /* USER CODE END Application */
 

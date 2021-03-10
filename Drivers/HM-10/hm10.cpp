@@ -234,6 +234,76 @@ bool HM10::setWhitelistedMAC(std::uint8_t id, char const* address) {
   debugLog("Setting whitelisted MAC #%d to %s", id, address);
   return transmitAndCheckResponse("OK+AD", "AT+AD%d%s", id, address);
 }
+
+ConnInterval HM10::minimumConnectionInterval() {
+  debugLog("Checking minimum connection interval");
+  if (transmitAndCheckResponse("OK+Get", "AT+COMI?")) {
+    return static_cast<ConnInterval>(extractNumberFromResponse());
+  }
+  return ConnInterval::InvalidInterval;
+}
+
+bool HM10::setMinimumConnectionInterval(ConnInterval interval) {
+  debugLog("Setting minimum connection interval to %d", interval);
+  return transmitAndCheckResponse("OK+Set", "AT+COMI%d", static_cast<std::uint8_t>(interval));
+}
+
+ConnInterval HM10::maximumConnectionInterval() {
+  debugLog("Checking maximum connection interval");
+  if (transmitAndCheckResponse("OK+Get", "AT+COMA?")) {
+    return static_cast<ConnInterval>(extractNumberFromResponse());
+  }
+  return ConnInterval::InvalidInterval;
+}
+
+bool HM10::setMaximumConnectionInterval(ConnInterval interval) {
+  debugLog("Setting maximum connection interval to %d", interval);
+  return transmitAndCheckResponse("OK+Set", "AT+COMA%d", static_cast<std::uint8_t>(interval));
+}
+
+int HM10::connectionSlaveLatency() {
+  debugLog("Checking connection slave latency");
+  if (transmitAndCheckResponse("OK+Get", "AT+COLA?")) {
+    return static_cast<int>(extractNumberFromResponse());
+  }
+  return -1;
+}
+
+bool HM10::setConnectionSlaveLatency(int latency) {
+  if (latency < 0 || latency > 4) {
+    return false;
+  }
+
+  debugLog("Setting connection slave latency to %d", latency);
+  return transmitAndCheckResponse("OK+Set", "AT+COLA%d", static_cast<std::uint8_t>(latency));
+}
+
+ConnSupervisionTimeout HM10::connectionSupervisionTimeout() {
+  debugLog("Checking connection supervision timeout");
+  if (transmitAndCheckResponse("OK+Get", "AT+COSU?")) {
+    return static_cast<ConnSupervisionTimeout>(extractNumberFromResponse());
+  }
+  return ConnSupervisionTimeout::InvalidTimeout;
+}
+
+bool HM10::setConnectionSupervisionTimeout(ConnSupervisionTimeout timeout) {
+  debugLog("Setting connection supervision timeout to %d", static_cast<std::uint8_t>(timeout));
+  return transmitAndCheckResponse("OK+Set", "AT+COSU%d", static_cast<std::uint8_t>(timeout));
+}
+
+bool HM10::updateConnection() {
+  debugLog("Checking status of connection updating");
+  if (transmitAndCheckResponse("OK+Get", "AT+COUP?")) {
+    return static_cast<bool>(extractNumberFromResponse());
+  }
+  return false;
+}
+
+bool HM10::setConnectionUpdating(bool state) {
+  debugLog("Setting connection updating to %d", static_cast<std::uint8_t>(state));
+  return transmitAndCheckResponse("OK+Set", "AT+COUP%d", static_cast<std::uint8_t>(state));
+}
+
 // ===== Private/low-level/utility functions ===== //
 
 int HM10::transmitBuffer() {

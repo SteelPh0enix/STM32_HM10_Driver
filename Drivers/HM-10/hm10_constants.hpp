@@ -66,4 +66,28 @@ enum class AdvertType : std::uint8_t {
   All = 0, OnlyConnectLastDevice = 1, OnlyAdvertAndScanResponse = 2, OnlyAdvert = 3, Invalid = 0xFF
 };
 
+enum class ConnInterval : std::uint8_t {
+  Interval7p5ms = 0,
+  Interval10ms = 1,
+  Interval15ms = 2,
+  Interval20ms = 3,
+  Interval25ms = 4,
+  Interval30ms = 5,
+  Interval35ms = 6,
+  Interval40ms = 7,
+  Interval45ms = 8,
+  Interval4000ms = 9,
+  InvalidInterval = 0xFF
+};
+
+enum class ConnSupervisionTimeout : std::uint8_t {
+  Timeout100ms = 0,
+  Timeout1000ms = 1,
+  Timeout2000ms = 2,
+  Timeout3000ms = 3,
+  Timeout4000ms = 4,
+  Timeout5000ms = 5,
+  Timeout6000ms = 6,
+  InvalidTimeout = 0xFF
+};
 }

@@ -97,41 +97,47 @@ public:
   // Will restore all the settings to factory defaults, along with baudrate of MCU UART (to 9600bps)
   bool factoryReset(bool waitForStartup = true);
 
-  // Set the baudrate of the module and MCU. Automatically reboots the module, unless `reboot` is false.
+  // Get/set the baudrate of the module and MCU UART. Setting it automatically reboots the module, unless `reboot` is false.
+  Baudrate baudRate();
   bool setBaudRate(Baudrate new_baud, bool rebootImmediately = true, bool waitForStartup = true);
 
-  // Gets the baudrate from HM-10
-  Baudrate baudRate();
-
-  // Get the MAC address of the module, requires at least 13-byte buffer (12 bytes of MAC and terminator)
+  // Get/set the MAC address of the module)
   MACAddress macAddress();
-
-  // Set the MAC address of the module
   bool setMACAddress(char const* address);
 
-  // Get advertising interval
+  // Get/set advertising interval
   AdvertInterval advertisingInterval();
-
-  // Set advertising inverval
   bool setAdvertisingInterval(AdvertInterval interval);
 
-  // Get advertising type
+  // Get/set advertising type
   AdvertType advertisingType();
-
-  // Set advertising type
   bool setAdvertisingType(AdvertType type);
 
-  // Get whitelist status
+  // Get/set whitelist status
   bool whiteListEnabled();
-
-  // Enable or disable whitelist
   bool setWhiteListState(bool status);
 
-  // Get whitelisted MAC address. HM-10 can have up to 3 addresses on whitelist, counting from 1.
+  // Get/set whitelisted MAC address. HM-10 can have up to 3 addresses on whitelist, counting from 1.
   MACAddress whiteListedMAC(std::uint8_t id);
-
-  // Get whitelisted MAC address. HM-10 can have up to 3 addresses on whitelist, counting from 1.
   bool setWhitelistedMAC(std::uint8_t id, char const* address);
+
+  // Get/set minimum and maximum Link Layer connection interval
+  ConnInterval minimumConnectionInterval();
+  bool setMinimumConnectionInterval(ConnInterval interval);
+  ConnInterval maximumConnectionInterval();
+  bool setMaximumConnectionInterval(ConnInterval interval);
+
+  // Get/set Link Layer connection slave latency (range 0 - 4)
+  int connectionSlaveLatency();
+  bool setConnectionSlaveLatency(int latency);
+
+  // Get/set connection supervision timeout
+  ConnSupervisionTimeout connectionSupervisionTimeout();
+  bool setConnectionSupervisionTimeout(ConnSupervisionTimeout timeout);
+
+  // Get/set the state of connection updating (slave mode)
+  bool updateConnection();
+  bool setConnectionUpdating(bool state);
 
 private:
   int transmitBuffer();
