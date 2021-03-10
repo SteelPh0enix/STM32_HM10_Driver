@@ -58,12 +58,26 @@ public:
   // your firmware is updated.
   static constexpr Baudrate DefaultBaudrate { Baudrate::Baud115200 };
 
+  using DataCallbackT = void(*)(char*, std::size_t);
+  using DeviceConnectedT = void(*)(MACAddress const&);
+  using DeviceDisconnectedT = void(*)();
+
   HM10(UART_HandleTypeDef* uart);
 
   void setUART(UART_HandleTypeDef* uart);
   UART_HandleTypeDef* UART() const;
 
   std::size_t bufferSize() const;
+
+  // This callback will be automatically called when the module will receive the data
+  // after connecting to master.
+  void setDataCallback(DataCallbackT callback);
+
+  // This callback will be automatically called when a new device connects
+  void setDeviceConnectedCallback(DeviceConnectedT callback);
+
+  // This callback will be automatically called when a device disconnects
+  void setDeviceDisconnectedCallback(DeviceDisconnectedT callback);
 
   // Initializes the module communication (enables UART idle line interrupt and starts the receive procedure)
   // In order for this library to work correct, you have to call transmitCompleted IN IDLE LINE INTERRUPT HANDLER.
@@ -85,6 +99,12 @@ public:
   // Similar to isBusy but returns the exact state of operation.
   bool isReceiving() const;
   bool isTransmitting() const;
+
+  // Tells if the module is connected to a master device
+  bool isConnected() const;
+
+  // Returns MAC address of a master device
+  MACAddress masterMAC() const;
 
   // Send `AT` to check if the module is alive and communication is working
   // Returns `true` if module responds OK, `false` on any error
@@ -229,12 +249,14 @@ public:
   bool setUARTShutdownOnSleep(bool state);
 
   // Set module advertisement data (max 12-byte hex string)
-  bool setAdvertisementData(char* data);
+  bool setAdvertisementData(char const* data);
 
   // Get firmware version
   Version firmwareVersion();
 
 private:
+  bool handleConnectionMessage();
+
   int transmitBuffer();
   void waitForTransmitCompletion() const;
 
@@ -279,6 +301,13 @@ private:
 
   Baudrate m_currentBaudrate { DefaultBaudrate };
   Baudrate m_newBaudrate { DefaultBaudrate };
+
+  bool m_isConnected { false };
+  MACAddress m_connectedMAC { };
+
+  DataCallbackT m_dataCallback { nullptr };
+  DeviceConnectedT m_deviceConnectedCallback { nullptr };
+  DeviceDisconnectedT m_deviceDisconnectedCallback { nullptr };
 };
 
 }

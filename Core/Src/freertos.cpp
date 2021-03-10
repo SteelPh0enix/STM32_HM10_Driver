@@ -71,6 +71,10 @@ void testSupervisionTimeout();
 void testConnectionUpdating();
 void testCharacteristicValue();
 void testNotifications();
+
+void dataCallback(char* data, std::size_t length);
+void connectedCallback(HM10::MACAddress const& mac);
+void disconnectedCallback();
 /* USER CODE END FunctionPrototypes */
 
 void StartMainTask(void* argument);
@@ -145,8 +149,8 @@ void StartMainTask(void* argument) {
 
   printf("===== TESTS STARTING =====\n");
 
-//  testFactoryReset();
-//  testBaudRate();
+  testFactoryReset();
+  testBaudRate();
 //  testMACAddress();
 //  testAdvertisingInterval();
 //  testMACWhitelist();
@@ -155,9 +159,55 @@ void StartMainTask(void* argument) {
 //  testSupervisionTimeout();
 //  testConnectionUpdating();
 //  testCharacteristicValue();
-  testNotifications();
+//  testNotifications();
+
+  HM10::Version version = hm10.firmwareVersion();
+  printf("Firmware version: %s\n", version.version);
+
+  hm10.setDataCallback(dataCallback);
+  hm10.setDeviceConnectedCallback(connectedCallback);
+  hm10.setDeviceDisconnectedCallback(disconnectedCallback);
+
+  hm10.setAutomaticMode(true);
+  printf("Automatic mode: %s\n", hm10.automaticMode() ? "enabled" : "disabled");
+
+  hm10.setAutoSleep(false);
+  printf("Auto sleep: %s\n", hm10.autoSleep() ? "enabled" : "disabled");
+
+  hm10.setWorkMode(HM10::WorkMode::Transmission);
+  printf("Work mode: %d\n", static_cast<int>(hm10.workMode()));
+
+  hm10.setRole(HM10::Role::Peripheral);
+  printf("Role: %d\n", static_cast<int>(hm10.role()));
+
+  hm10.setBondingMode(HM10::BondMode::AuthNoPin);
+  printf("Bonding mode: %d\n", static_cast<int>(hm10.bondingMode()));
+
+  HM10::DeviceName name = hm10.name();
+  printf("Name: %s\n", name.name);
+
+  hm10.setName("ruchansko");
+  name = hm10.name();
+  printf("New name: %s\n", name.name);
+
+//  hm10.setPassword(213769);
+//  printf("Password: %06d\n", hm10.password());
+
+  hm10.setServiceUUID(0xDEAD);
+  printf("Service UUID: 0x%04X\n", hm10.serviceUUID());
+
+  hm10.setCharacteristicValue(0xBEEF);
+  printf("Characteristic value: 0x%04X\n", hm10.characteristicValue());
+
+  hm10.setNotificationsState(true);
+  printf("Notifications state: %s\n", hm10.notificationsState() ? "enabled" : "disabled");
+
+  hm10.setNotificationsWithAddressState(true);
+  printf("Notifications with address: %s\n",
+         hm10.notificationsWithAddress() ? "enabled" : "disabled");
 
   printf("===== TESTS DONE! =====\n");
+
   for (;;) {
     osDelay(1);
   }
@@ -290,6 +340,18 @@ void testNotifications() {
   printf("New notifications mode: %s (%s address)\n",
          (hm10.notificationsState() ? "enabled" : "disabled"),
          (hm10.notificationsWithAddress() ? "with" : "without"));
+}
+
+void dataCallback(char* data, std::size_t length) {
+  printf("%d BYTES FROM MASTER: %s\n", length, data);
+}
+
+void connectedCallback(HM10::MACAddress const& mac) {
+  printf("Connected to master with MAC address %s\n", mac.address);
+}
+
+void disconnectedCallback() {
+  printf("Disconnected from master!\n");
 }
 /* USER CODE END Application */
 

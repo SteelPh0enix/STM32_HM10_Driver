@@ -34,6 +34,18 @@ std::size_t HM10::bufferSize() const {
   return HM10_BUFFER_SIZE;
 }
 
+void HM10::setDataCallback(DataCallbackT callback) {
+  m_dataCallback = callback;
+}
+
+void HM10::setDeviceConnectedCallback(DeviceConnectedT callback) {
+  m_deviceConnectedCallback = callback;
+}
+
+void HM10::setDeviceDisconnectedCallback(DeviceDisconnectedT callback) {
+  m_deviceDisconnectedCallback = callback;
+}
+
 int HM10::initialize() {
   debugLog("Init started");
   __HAL_UART_ENABLE_IT(UART(), UART_IT_IDLE);
@@ -68,13 +80,21 @@ void HM10::receiveCompleted() {
   }
 
 #ifdef HM10_DEBUG
-  if (m_rxInProgress) {
+  if (isReceiving()) {
     debugLogLL("Message received, length: %d, data: %s", m_messageLength, m_messageBuffer);
   } else {
     debugLog("Unexpected message received, length: %d, data: %s", m_messageLength, m_messageBuffer);
   }
 #endif
+
   m_msgStartPtr = messageEndPtr;
+
+  // Unexpected data - either information about new connection/disconnection
+  // or data for the application
+  if (!isReceiving() && !handleConnectionMessage() && m_dataCallback != nullptr) {
+    m_dataCallback(m_messageBuffer, m_messageLength);
+  }
+
   m_rxInProgress = false;
 }
 
@@ -92,6 +112,14 @@ bool HM10::isReceiving() const {
 
 bool HM10::isTransmitting() const {
   return m_txInProgress;
+}
+
+bool HM10::isConnected() const {
+  return m_isConnected;
+}
+
+MACAddress HM10::masterMAC() const {
+  return m_connectedMAC;
 }
 
 // ===== Functionality ===== //
@@ -338,12 +366,11 @@ std::uint16_t HM10::characteristicValue() {
 }
 
 bool HM10::setCharacteristicValue(std::uint16_t value) {
-  if (value < 0x0001 || value > 0xFFFE) {
-    return false;
+  if (value >= 0x0001 && value <= 0xFFFE) {
+    debugLog("Setting characteristic value to 0x%04X", value);
+    return transmitAndCheckResponse("OK+Set", "AT+CHAR0x%04X", value);
   }
-
-  debugLog("Setting characteristic value to 0x%04X", value);
-  return transmitAndCheckResponse("OK+Set", "AT+CHAR0x%04X", value);
+  return false;
 }
 
 bool HM10::notificationsState() {
@@ -439,10 +466,10 @@ bool HM10::setWorkMode(WorkMode new_mode) {
 }
 
 DeviceName HM10::name() {
-  DeviceName name;
+  DeviceName name { };
   debugLog("Getting device name");
-  if (transmitAndCheckResponse("OK+Get", "AT+NAME?")) {
-    copyStringFromResponse(7, name.name);
+  if (transmitAndCheckResponse("OK+NAME", "AT+NAME?")) {
+    copyStringFromResponse(8, name.name);
   }
   return name;
 }
@@ -571,6 +598,22 @@ bool HM10::setBondingMode(BondMode new_mode) {
   return false;
 }
 
+std::uint16_t HM10::serviceUUID() {
+  debugLog("Getting service UUID");
+  if (transmitAndCheckResponse("OK+Get", "AT+UUID?")) {
+    return static_cast<std::uint16_t>(extractNumberFromResponse(9, 16));
+  }
+  return 0x0000;
+}
+
+bool HM10::setServiceUUID(std::uint16_t new_uuid) {
+  if (new_uuid >= 0x0001 && new_uuid <= 0xFFFE) {
+    debugLog("Setting service UUID to 0x%04X", new_uuid);
+    return transmitAndCheckResponse("OK+Set", "AT+UUID0x%04X", new_uuid);
+  }
+  return false;
+}
+
 bool HM10::uartShutdownOnSleep() {
   debugLog("Checking if UART will shutdown on sleep");
   if (transmitAndCheckResponse("OK+Get", "AT+UART?")) {
@@ -584,7 +627,7 @@ bool HM10::setUARTShutdownOnSleep(bool state) {
   return transmitAndCheckResponse("OK+Set", "AT+UART%d", (state ? 1 : 0));
 }
 
-bool HM10::setAdvertisementData(char* data) {
+bool HM10::setAdvertisementData(char const* data) {
   debugLog("Setting advertisement data to %s", data);
   return transmitAndCheckResponse("OK+Set", "AT+PACK%s", data);
 }
@@ -600,6 +643,30 @@ Version HM10::firmwareVersion() {
 }
 
 // ===== Private/low-level/utility functions ===== //
+
+bool HM10::handleConnectionMessage() {
+  if (compareWithResponse("OK+CONN")) {
+    m_isConnected = true;
+    copyStringFromResponse(8, m_connectedMAC.address);
+//    std::memcpy(m_connectedMAC.address, m_messageBuffer, 12);
+
+    if (m_deviceConnectedCallback != nullptr) {
+      m_deviceConnectedCallback(m_connectedMAC);
+    }
+
+    return true;
+  } else if (compareWithResponse("OK+LOST")) {
+    m_isConnected = false;
+    std::memset(m_connectedMAC.address, '\0', sizeof(m_connectedMAC.address));
+
+    if (m_deviceDisconnectedCallback != nullptr) {
+      m_deviceDisconnectedCallback();
+    }
+
+    return true;
+  }
+  return false;
+}
 
 int HM10::transmitBuffer() {
   m_txInProgress = true;
@@ -697,7 +764,14 @@ long HM10::extractNumberFromResponse(std::size_t offset, int base) const {
 }
 
 void HM10::copyStringFromResponse(std::size_t offset, char* destination) const {
-  std::strcpy(destination, &m_messageBuffer[0] + offset);
+//  std::strcpy(destination, &m_messageBuffer[0] + offset);
+  // ignore \n, \r and \0 - custom loop
+  char const* source = &m_messageBuffer[0] + offset;
+  while (*source != '\0' && *source != '\r' && *source != '\n') {
+    *destination = *source;
+    destination++;
+    source++;
+  }
 }
 
 void HM10::setUARTBaudrate(std::uint32_t new_baud) const {

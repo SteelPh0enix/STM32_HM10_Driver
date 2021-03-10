@@ -100,7 +100,7 @@ enum class WorkMode : std::uint8_t {
 };
 
 struct DeviceName {
-  char name[32];
+  char name[12];
 };
 
 enum class OutputPower : std::uint8_t {
@@ -124,6 +124,6 @@ enum class BondMode : std::uint8_t {
 };
 
 struct Version {
-  char version[8];
+  char version[16];
 };
 }
