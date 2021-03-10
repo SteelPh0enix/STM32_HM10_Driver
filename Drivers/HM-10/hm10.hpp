@@ -18,9 +18,6 @@
  * it to the rest of the program with message queues, and let it run there. This lib will use osDelay to give CPU time to
  * other RTOS threads when it's busy waiting for HM-10 response. If you won't use RTOS, then the delays will block the whole CPU.
  *
- * Example application of this library should be in `example` branch of the official library repository.
- * Basically, you have to put some callbacks in UART interrupt handlers. Library will handle the rest.
- *
  * This library also uses idle-line UART interrupt, so if your hardware for some reason does not support it,
  * then you have to find a workaround (the only reasonable way is probably a timeout, which will drastically
  * decrease performance.
