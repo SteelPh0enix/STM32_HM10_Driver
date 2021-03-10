@@ -7,7 +7,7 @@
 
 #pragma once
 
-#define HM10_DEBUG
+//#define HM10_DEBUG
 //#define HM10_DEBUG_LOWLEVEL
 
 #ifdef HM10_DEBUG

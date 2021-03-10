@@ -99,4 +99,11 @@ enum class WorkMode : std::uint8_t {
   Transmission = 0, PIOAndTransmission = 1, RemoteAndTransmission = 2, Invalid = 0xFF
 };
 
+struct DeviceName {
+  char name[32];
+};
+
+enum class OutputPower : std::uint8_t {
+  Normal = 0, Max = 1, Invalid = 0xFF
+};
 }

@@ -178,6 +178,19 @@ public:
   WorkMode workMode();
   bool setWorkMode(WorkMode new_mode);
 
+  // Get/set device name
+  DeviceName name();
+  bool setName(char const* new_name);
+
+  // Get/set output driver power
+  OutputPower outputPower();
+  bool setOutputPower(OutputPower new_power);
+
+  // Get/set password. NOTE: password for the module will always have leading zero's
+  // filling it to 6 numbers. So, for example, setting 1234 as pin will make it 001234
+  std::uint32_t password();
+  bool setPassword(std::uint32_t new_pin);
+
 private:
   int transmitBuffer();
   void waitForTransmitCompletion() const;

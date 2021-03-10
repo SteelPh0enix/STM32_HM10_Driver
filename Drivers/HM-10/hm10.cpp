@@ -438,6 +438,44 @@ bool HM10::setWorkMode(WorkMode new_mode) {
   return false;
 }
 
+DeviceName HM10::name() {
+  DeviceName name;
+  debugLog("Getting device name");
+  if (transmitAndCheckResponse("OK+Get", "AT+NAME?")) {
+    copyStringFromResponse(7, name.name);
+  }
+  return name;
+}
+
+bool HM10::setName(char const* new_name) {
+  debugLog("Setting device name to %s", new_name);
+  return transmitAndCheckResponse("OK+Set", "AT+NAME%s", new_name);
+}
+
+OutputPower HM10::outputPower() {
+  debugLog("Getting output power");
+  if (transmitAndCheckResponse("OK+Get", "AT+PCTL?")) {
+    return static_cast<OutputPower>(extractNumberFromResponse());
+  }
+  return OutputPower::Invalid;
+}
+
+bool HM10::setOutputPower(OutputPower new_power) {
+  if (new_power != OutputPower::Invalid) {
+    debugLog("Setting output power to %d", static_cast<int>(new_power));
+    return transmitAndCheckResponse("OK+Set", "AT+PCTL%d", static_cast<std::uint8_t>(new_power));
+  }
+  return false;
+}
+
+std::uint32_t HM10::password() {
+
+}
+
+bool HM10::setPassword(std::uint32_t new_pin) {
+
+}
+
 // ===== Private/low-level/utility functions ===== //
 
 int HM10::transmitBuffer() {
@@ -509,8 +547,7 @@ bool HM10::transmitAndCheckResponse(char const* expectedResponse, char const* fo
   debugLog("Transmitting: %s", m_txBuffer);
   if (!transmitAndReceive()) {
     return false;
-  }
-  debugLog("Got response: %s", m_messageBuffer);
+  }debugLog("Got response: %s", m_messageBuffer);
 
   return compareWithResponse(expectedResponse);
 }
