@@ -11,7 +11,6 @@
 
 #include <cstring>
 #include <cstdlib>
-#include <cstdarg>
 
 namespace HM10 {
 
@@ -102,12 +101,9 @@ bool HM10::isAlive() {
 }
 
 bool HM10::reboot(bool waitForStartup) {
-  copyCommandToBuffer("AT+RESET");
-  if (!transmitAndReceive()) {
+  if (!transmitAndCheckResponse("OK+RESET", "AT+RESET")) {
     return false;
   }
-
-  debugLog("Response: %s", m_messageBuffer);
 
   if (m_factoryRebootPending) {
     std::uint32_t const newBaudrate = BaudrateValues[static_cast<std::uint8_t>(DefaultBaudrate)];
@@ -136,12 +132,7 @@ bool HM10::reboot(bool waitForStartup) {
 }
 
 bool HM10::factoryReset(bool waitForStartup) {
-  copyCommandToBuffer("AT+RENEW");
-  if (!transmitAndReceive()) {
-    return false;
-  }
-
-  if (compareWithResponse("OK+RENEW")) {
+  if (transmitAndCheckResponse("OK+RENEW", "AT+RENEW")) {
     m_factoryRebootPending = true;
     return reboot(waitForStartup);
   } else {
@@ -169,111 +160,59 @@ Baudrate HM10::baudRate() {
 
 MACAddress HM10::macAddress() {
   MACAddress addr { };
+  debugLog("Checking MAC address");
 
-  copyCommandToBuffer("AT+ADDR?");
-  debugLog("Checking MAC address: %s", m_txBuffer);
-  if (!transmitAndReceive()) {
-    return addr;
-  }
-  debugLog("Got response: %s", m_messageBuffer);
-
-  if (!compareWithResponse("OK+ADDR")) {
-    return addr;
+  if (transmitAndCheckResponse("OK+ADDR", "AT+ADDR?")) {
+    // omitting OK+ADDR: with + 8
+    copyStringFromResponse(8, addr.address);
   }
 
-// omitting OK+ADDR: with + 8
-  copyStringFromResponse(8, addr.address);
   return addr;
 }
 
 bool HM10::setMACAddress(char const* address) {
-  copyCommandToBuffer("AT+ADDR%s", address);
-  debugLog("Setting MAC address: %s", m_txBuffer);
-  if (!transmitAndReceive()) {
-    return false;
-  }
-  debugLog("Got response: %s", m_messageBuffer);
-
-  return compareWithResponse("OK+Set");
+  debugLog("Setting MAC address to %s", address);
+  return transmitAndCheckResponse("OK+Set", "AT+ADDR%s", address);
 }
 
 AdvertInterval HM10::advertisingInterval() {
-  copyCommandToBuffer("AT+ADVI?");
-  debugLog("Checking advertising interval: %s", m_txBuffer);
-  if (!transmitAndReceive()) {
-    return AdvertInterval::InvalidInterval;
+  debugLog("Checking advertising interval");
+  if (transmitAndCheckResponse("OK+Get", "AT+ADVI?")) {
+    return static_cast<AdvertInterval>(extractNumberFromResponse(7, 16));
   }
-  debugLog("Got response: %s", m_messageBuffer);
-
-  if (!compareWithResponse("OK+Get")) {
-    return AdvertInterval::InvalidInterval;
-  }
-
-  return static_cast<AdvertInterval>(extractNumberFromResponse(7, 16));
+  return AdvertInterval::InvalidInterval;
 }
 
 bool HM10::setAdvertisingInterval(AdvertInterval interval) {
-  copyCommandToBuffer("AT+ADVI%01X", static_cast<std::uint8_t>(interval));
-  debugLog("Setting advertising interval: %s", m_txBuffer);
-  if (!transmitAndReceive()) {
-    return false;
-  }
-  debugLog("Got response: %s", m_messageBuffer);
-
-  return compareWithResponse("OK+Set");
+  debugLog("Setting advertising interval to %d", static_cast<uint8_t>(interval));
+  return transmitAndCheckResponse("OK+Set", "AT+ADVI%01X", static_cast<std::uint8_t>(interval));
 }
 
 AdvertType HM10::advertisingType() {
-  copyCommandToBuffer("AT+ADTY?");
-  debugLog("Checking advertising type: %s", m_txBuffer);
-  if (!transmitAndReceive()) {
-    return AdvertType::Invalid;
+  debugLog("Checking advertising type");
+  if (transmitAndCheckResponse("OK+Get", "AT+ADTY?")) {
+    return static_cast<AdvertType>(extractNumberFromResponse());
   }
-  debugLog("Got response: %s", m_messageBuffer);
-
-  if (!compareWithResponse("OK+Get")) {
-    return AdvertType::Invalid;
-  }
-
-  return static_cast<AdvertType>(extractNumberFromResponse());
+  return AdvertType::Invalid;
 }
 
 bool HM10::setAdvertisingType(AdvertType type) {
-  copyCommandToBuffer("AT+ADTY%d", static_cast<std::uint8_t>(type));
-  debugLog("Setting advertising type: %s", m_txBuffer);
-  if (!transmitAndReceive()) {
-    return false;
-  }
-  debugLog("Got response: %s", m_messageBuffer);
-
-  return compareWithResponse("OK+Set");
+  debugLog("Setting advertising type to %d", static_cast<std::uint8_t>(type));
+  return transmitAndCheckResponse("OK+Set", "AT+ADTY%d", static_cast<std::uint8_t>(type));
 }
 
 bool HM10::whiteListEnabled() {
-  copyCommandToBuffer("AT+ALLO?");
-  debugLog("Setting whitelist state: %s", m_txBuffer);
-  if (!transmitAndReceive()) {
-    return false;
+  debugLog("Checking whitelist state");
+  if (transmitAndCheckResponse("OK+Get", "AT+ALLO?")) {
+    return static_cast<bool>(extractNumberFromResponse());
+  } else {
+    return false; // ¯\_(ツ)_/¯
   }
-
-  debugLog("Got response: %s", m_messageBuffer);
-
-  if (!compareWithResponse("OK+Get")) {
-    return false;
-  }
-
-  return static_cast<bool>(extractNumberFromResponse());
 }
 
 bool HM10::setWhiteListState(bool status) {
-  copyCommandToBuffer("AT+ALLO%d", (status ? 1 : 0));
-  debugLog("Setting whitelist state: %s", m_txBuffer);
-  if (!transmitAndReceive()) {
-    return false;
-  }
-
-  debugLog("Got response: %s", m_messageBuffer);
-  return compareWithResponse("OK+Set");
+  debugLog("Setting whitelist state to %d", (status ? 1 : 0));
+  return transmitAndCheckResponse("OK+Set", "AT+ALLO%d", (status ? 1 : 0));
 }
 
 MACAddress HM10::whiteListedMAC(std::uint8_t id) {
@@ -283,31 +222,17 @@ MACAddress HM10::whiteListedMAC(std::uint8_t id) {
     return mac;
   }
 
-  copyCommandToBuffer("AT+AD%d??", id);
-  debugLog("Checking whitelisted MAC: %s", m_txBuffer);
-  if (!transmitAndReceive()) {
-    return mac;
-  }
+  debugLog("Checking whitelisted MAC #%d", id);
 
-  debugLog("Got response: %s", m_messageBuffer);
-  if (!compareWithResponse("OK+AD")) {
-    return mac;
+  if (transmitAndCheckResponse("OK+AD", "AT+AD%d??", id)) {
+    copyStringFromResponse(8, mac.address);
   }
-
-  copyStringFromResponse(8, mac.address);
   return mac;
 }
 
 bool HM10::setWhitelistedMAC(std::uint8_t id, char const* address) {
-  copyCommandToBuffer("AT+AD%d%s", id, address);
-  debugLog("Setting MAC whitelist: %s", m_txBuffer);
-  if (!transmitAndReceive()) {
-    return false;
-  }
-
-  debugLog("Got response: %s", m_messageBuffer);
-
-  return compareWithResponse("OK+AD");
+  debugLog("Setting whitelisted MAC #%d to %s", id, address);
+  return transmitAndCheckResponse("OK+AD", "AT+AD%d%s", id, address);
 }
 // ===== Private/low-level/utility functions ===== //
 
@@ -371,13 +296,32 @@ bool HM10::transmitAndReceive(std::uint32_t rx_wait_time) {
   return true;
 }
 
-void HM10::copyCommandToBuffer(char const* const command, ...) {
+bool HM10::transmitAndCheckResponse(char const* expectedResponse, char const* format, ...) {
   std::va_list args;
-  va_start(args, command);
+  va_start(args, format);
+  copyCommandToBufferVarg(format, args);
+  va_end(args);
 
-  m_txDataLength = vsnprintf(&m_txBuffer[0], bufferSize(), command, args);
+  debugLog("Transmitting: %s", m_txBuffer);
+  if (!transmitAndReceive()) {
+    return false;
+  }
+  debugLog("Got response: %s", m_messageBuffer);
+
+  return compareWithResponse(expectedResponse);
+}
+
+void HM10::copyCommandToBuffer(char const* const commandPattern, ...) {
+  std::va_list args;
+  va_start(args, commandPattern);
+
+  copyCommandToBufferVarg(commandPattern, args);
 
   va_end(args);
+}
+
+void HM10::copyCommandToBufferVarg(char const* const commandPattern, std::va_list args) {
+  m_txDataLength = vsnprintf(&m_txBuffer[0], bufferSize(), commandPattern, args);
 }
 
 bool HM10::compareWithResponse(char const* str) const {

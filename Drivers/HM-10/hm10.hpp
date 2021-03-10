@@ -29,6 +29,7 @@
 #pragma once
 #include <stm32f4xx.h>
 #include <cstdint>
+#include <cstdarg>
 #include "hm10_constants.hpp"
 
 // Re-define it somewhere in your code if you want to have different buffer size.
@@ -142,9 +143,12 @@ private:
   bool waitForReceiveCompletion(std::uint32_t max_time = 1000) const;
 
   bool transmitAndReceive(std::uint32_t rx_wait_time = 1000);
+  bool transmitAndCheckResponse(char const* expectedResponse, char const* format, ...);
 
   void copyCommandToBuffer(char const* const commandPattern, ...);
+  void copyCommandToBufferVarg(char const* const commandPattern, std::va_list args);
   bool compareWithResponse(char const* str) const;
+
   // Most of the command responses are OK+Get: so the default offset it 7
   long extractNumberFromResponse(std::size_t offset = 7, int base = 10) const;
   void copyStringFromResponse(std::size_t offset, char* destination) const;

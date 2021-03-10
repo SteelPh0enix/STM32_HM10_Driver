@@ -26,8 +26,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "printf.h"
 #include "usart.h"
+#include "printf.h"
 #include <hm10.hpp>
 #include <cstring>
 /* USER CODE END Includes */
@@ -55,7 +55,7 @@ HM10::HM10 hm10(&HM10_UART);
 /* USER CODE END Variables */
 /* Definitions for mainTask */
 osThreadId_t mainTaskHandle;
-osThreadAttr_t const mainTask_attributes = { .name = "mainTask", .stack_size = 512 * 4, .priority = // @suppress("Invalid arguments")
+osThreadAttr_t const mainTask_attributes = { .name = "mainTask", .stack_size = 512 * 4, .priority =
     (osPriority_t) osPriorityNormal, };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -121,8 +121,7 @@ void MX_FREERTOS_Init(void) {
 void StartMainTask(void* argument) {
   /* USER CODE BEGIN StartMainTask */
 
-  // TODO: idle-line based RX instead of standard DMA RX
-  osDelay(100);
+  osDelay(1000);
 
   int initStatus = hm10.initialize();
   if (initStatus != HAL_OK) {
@@ -140,11 +139,11 @@ void StartMainTask(void* argument) {
 
   printf("===== TESTS STARTING =====\n");
 
-//  testFactoryReset();
-//  testBaudRate();
+  testFactoryReset();
+  testBaudRate();
 //  testMACAddress();
 //  testAdvertisingInterval();
-  testMACWhitelist();
+//  testMACWhitelist();
 
   printf("===== TESTS DONE! =====\n");
   for (;;) {
