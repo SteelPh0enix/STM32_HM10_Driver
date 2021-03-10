@@ -69,6 +69,8 @@ void testConnectionIntervals();
 void testSlaveLatency();
 void testSupervisionTimeout();
 void testConnectionUpdating();
+void testCharacteristicValue();
+void testNotifications();
 /* USER CODE END FunctionPrototypes */
 
 void StartMainTask(void* argument);
@@ -152,6 +154,8 @@ void StartMainTask(void* argument) {
 //  testSlaveLatency();
 //  testSupervisionTimeout();
 //  testConnectionUpdating();
+//  testCharacteristicValue();
+  testNotifications();
 
   printf("===== TESTS DONE! =====\n");
   for (;;) {
@@ -269,6 +273,23 @@ void testConnectionUpdating() {
   printf("Current connection updating status: %s\n", hm10.updateConnection() ? "true" : "false");
   hm10.setConnectionUpdating(false);
   printf("Current connection updating status: %s\n", hm10.updateConnection() ? "true" : "false");
+}
+
+void testCharacteristicValue() {
+  printf("Current characteristic value: 0x%04X\n", hm10.characteristicValue());
+  hm10.setCharacteristicValue(0xABCD);
+  printf("New characteristic value: 0x%04X\n", hm10.characteristicValue());
+}
+
+void testNotifications() {
+  printf("Current notifications mode: %s (%s address)\n",
+         (hm10.notificationsState() ? "enabled" : "disabled"),
+         (hm10.notificationsWithAddress() ? "with" : "without"));
+  hm10.setNotificationsState(true);
+  hm10.setNotificationsWithAddressState(true);
+  printf("New notifications mode: %s (%s address)\n",
+         (hm10.notificationsState() ? "enabled" : "disabled"),
+         (hm10.notificationsWithAddress() ? "with" : "without"));
 }
 /* USER CODE END Application */
 

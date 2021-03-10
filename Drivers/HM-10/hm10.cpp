@@ -67,7 +67,13 @@ void HM10::receiveCompleted() {
     m_messageLength = messagePrefixLength + messageSuffixLength;
   }
 
-  debugLogLL("Message received, length: %d, data: %s", m_messageLength, m_messageBuffer);
+#ifdef HM10_DEBUG
+  if (m_rxInProgress) {
+    debugLogLL("Message received, length: %d, data: %s", m_messageLength, m_messageBuffer);
+  } else {
+    debugLog("Unexpected message received, length: %d, data: %s", m_messageLength, m_messageBuffer);
+  }
+#endif
   m_msgStartPtr = messageEndPtr;
   m_rxInProgress = false;
 }
@@ -101,7 +107,8 @@ bool HM10::isAlive() {
 }
 
 bool HM10::reboot(bool waitForStartup) {
-  if (!transmitAndCheckResponse("OK+RESET", "AT+RESET")) {
+  copyCommandToBuffer("AT+RESET");
+  if (!transmitAndReceive()) {
     return false;
   }
 
@@ -302,6 +309,49 @@ bool HM10::updateConnection() {
 bool HM10::setConnectionUpdating(bool state) {
   debugLog("Setting connection updating to %d", static_cast<std::uint8_t>(state));
   return transmitAndCheckResponse("OK+Set", "AT+COUP%d", static_cast<std::uint8_t>(state));
+}
+
+std::uint16_t HM10::characteristicValue() {
+  debugLog("Getting characteristic value");
+  if (transmitAndCheckResponse("OK+Get", "AT+CHAR?")) {
+    return static_cast<std::uint16_t>(extractNumberFromResponse(9, 16));
+  }
+  return 0x0000;
+}
+
+bool HM10::setCharacteristicValue(std::uint16_t value) {
+  if (value < 0x0001 || value > 0xFFFE) {
+    return false;
+  }
+
+  debugLog("Setting characteristic value to 0x%04X", value);
+  return transmitAndCheckResponse("OK+Set", "AT+CHAR0x%04X", value);
+}
+
+bool HM10::notificationsState() {
+  debugLog("Getting notifications state");
+  if (transmitAndCheckResponse("OK+Get", "AT+NOTI?")) {
+    return static_cast<bool>(extractNumberFromResponse());
+  }
+  return false;
+}
+
+bool HM10::setNotificationsState(bool enabled) {
+  debugLog("Setting notifications state to %s", (enabled ? "true" : "false"));
+  return transmitAndCheckResponse("OK+Set", "AT+NOTI%d", (enabled ? 1 : 0));
+}
+
+bool HM10::notificationsWithAddress() {
+  debugLog("Getting notifications address state");
+  if (transmitAndCheckResponse("OK+Get", "AT+NOTI?")) {
+    return static_cast<bool>(extractNumberFromResponse());
+  }
+  return false;
+}
+
+bool HM10::setNotificationsWithAddressState(bool enabled) {
+  debugLog("Setting notifications with address to %s", (enabled ? "true" : "false"));
+  return transmitAndCheckResponse("OK+Set", "AT+NOTP%d", (enabled ? 1 : 0));
 }
 
 // ===== Private/low-level/utility functions ===== //

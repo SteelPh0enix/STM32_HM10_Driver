@@ -139,6 +139,18 @@ public:
   bool updateConnection();
   bool setConnectionUpdating(bool state);
 
+  // Get/set characteristic value
+  std::uint16_t characteristicValue();
+  bool setCharacteristicValue(std::uint16_t value);
+
+  // Get/set notifications state
+  bool notificationsState();
+  bool setNotificationsState(bool enabled);
+
+  // Get/set notifications mode
+  bool notificationsWithAddress();
+  bool setNotificationsWithAddressState(bool enabled);
+
 private:
   int transmitBuffer();
   void waitForTransmitCompletion() const;
