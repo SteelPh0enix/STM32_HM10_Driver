@@ -642,6 +642,22 @@ Version HM10::firmwareVersion() {
   return ver;
 }
 
+bool HM10::sendData(std::uint8_t const* data, std::size_t length, bool waitForTx) {
+  if (isConnected()) {
+    m_txInProgress = true;
+    int transmit_result = HAL_UART_Transmit_DMA(UART(), const_cast<std::uint8_t*>(data), length);
+    if (transmit_result == HAL_OK) {
+      if (waitForTx) {
+        waitForTransmitCompletion();
+      }
+      return true;
+    } else {
+      transmitCompleted();
+    }
+  }
+  return false;
+}
+
 // ===== Private/low-level/utility functions ===== //
 
 bool HM10::handleConnectionMessage() {

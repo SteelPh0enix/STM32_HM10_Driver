@@ -251,6 +251,12 @@ public:
   // Get firmware version
   Version firmwareVersion();
 
+  // Send data to connected device
+  // Returns 'false' if module is not connected.
+  // This function is blocking the thread by default.
+  // Change `waitForTx` to `false` to not block the thread.
+  bool sendData(std::uint8_t const* data, std::size_t length, bool waitForTx = true);
+
 private:
   bool handleConnectionMessage();
 

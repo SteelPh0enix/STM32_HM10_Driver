@@ -50,21 +50,19 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 HM10::HM10 hm10(&HM10_UART);
-//HM10::HM10 hm10<64>(&hal_interface);
+char hm_message_buffer[128] { };
+bool message_received = false;
 
 /* USER CODE END Variables */
 /* Definitions for mainTask */
 osThreadId_t mainTaskHandle;
-const osThreadAttr_t mainTask_attributes = {
-  .name = "mainTask",
-  .stack_size = 512 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
+osThreadAttr_t const mainTask_attributes = { .name = "mainTask", .stack_size = 512 * 4, .priority =
+    (osPriority_t) osPriorityNormal, };
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 void testFactoryReset();
-void testBaudRate(HM10::Baudrate new_baud = HM10::Baudrate::Baud230400);
+void testBaudRate(HM10::Baudrate new_baud = HM10::Baudrate::Baud115200);
 void testMACAddress(char const* new_mac = "");
 void testAdvertisingInterval(HM10::AdvertInterval new_interval = HM10::AdvertInterval::Adv546p25ms);
 void testMACWhitelist();
@@ -80,15 +78,15 @@ void connectedCallback(HM10::MACAddress const& mac);
 void disconnectedCallback();
 /* USER CODE END FunctionPrototypes */
 
-void StartMainTask(void *argument);
+void StartMainTask(void* argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
-  * @brief  FreeRTOS initialization
-  * @param  None
-  * @retval None
-  */
+ * @brief  FreeRTOS initialization
+ * @param  None
+ * @retval None
+ */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
@@ -131,8 +129,7 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartMainTask */
-void StartMainTask(void *argument)
-{
+void StartMainTask(void* argument) {
   /* USER CODE BEGIN StartMainTask */
 
   osDelay(1000);
@@ -212,8 +209,15 @@ void StartMainTask(void *argument)
 
   printf("===== TESTS DONE! =====\n");
 
+  char const* response = "test response";
+
   for (;;) {
     osDelay(1);
+    if (message_received) {
+      printf("%d BYTES FROM MASTER: %s\n", std::strlen(hm_message_buffer), hm_message_buffer);
+      hm10.sendData((uint8_t const*) response, std::strlen(response));
+      message_received = false;
+    }
   }
   /* USER CODE END StartMainTask */
 }
@@ -347,7 +351,8 @@ void testNotifications() {
 }
 
 void dataCallback(char* data, std::size_t length) {
-  printf("%d BYTES FROM MASTER: %s\n", length, data);
+  std::memcpy(hm_message_buffer, data, length);
+  message_received = true;
 }
 
 void connectedCallback(HM10::MACAddress const& mac) {

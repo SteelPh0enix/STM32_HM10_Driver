@@ -27,7 +27,7 @@ This example also uses a tiny printf library, which i strongly recommend (becaus
 You'll need to do few things in your project to use it:
 
 0. Update your HM-10 firmware to the newest version: http://jnhuamao.cn/download_rom_en.asp?id=1 - this library is written and tested for V709 firmware.
-1. Configure UART with DMA and interrupts. DMA RX channel has to be configured in circular mode. Default baud rate of HM-10 is `115200`.
+1. Configure UART with DMA and interrupts. DMA RX channel have to be configured in circular mode. Default baud rate of HM-10 is `115200`.
 ![UART DMA configuration](./readme_img/uart_dma.png)
 2. Turn on RTOS, create your tasks, and so on.
 3. Convert your CubeMX project to C++ in STM32CubeIDE. Right-click the project in CubeIDE and select "Convert to C++". **You also will have to rename extensions of all the files with C++ code to .cpp, [along with renaming main.c to main.cpp for C++ standard compatibility - click here to read why](https://isocpp.org/wiki/faq/mixing-c-and-cpp#overview-mixing-langs)**. Ignore this point if you already have a fully working C++ project or you know what you're doing.
