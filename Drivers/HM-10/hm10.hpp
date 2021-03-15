@@ -257,6 +257,11 @@ public:
   // Change `waitForTx` to `false` to not block the thread.
   bool sendData(std::uint8_t const* data, std::size_t length, bool waitForTx = true);
 
+  // printf, but on the module buffers.
+  // Be careful to not send more data than in HM10_BUFFER_SIZE
+  // It won't crash the program, it'll be stripped down to buffer size.
+  bool printf(char const* fmt, ...);
+
 private:
   bool handleConnectionMessage();
 
@@ -271,8 +276,8 @@ private:
   bool transmitAndReceive(std::uint32_t rx_wait_time = 1000);
   bool transmitAndCheckResponse(char const* expectedResponse, char const* format, ...);
 
-  void copyCommandToBuffer(char const* const commandPattern, ...);
-  void copyCommandToBufferVarg(char const* const commandPattern, std::va_list args);
+  void copyCommandToBuffer(char const* commandPattern, ...);
+  void copyCommandToBufferVarg(char const* commandPattern, std::va_list args);
   bool compareWithResponse(char const* str) const;
 
   // Most of the command responses are OK+Get: so the default offset it 7

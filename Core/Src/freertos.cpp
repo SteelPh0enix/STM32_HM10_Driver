@@ -181,7 +181,7 @@ void StartMainTask(void* argument) {
   hm10.setRole(HM10::Role::Peripheral);
   printf("Role: %d\n", static_cast<int>(hm10.role()));
 
-  hm10.setBondingMode(HM10::BondMode::AuthNoPin);
+  hm10.setBondingMode(HM10::BondMode::NoPin);
   printf("Bonding mode: %d\n", static_cast<int>(hm10.bondingMode()));
 
   HM10::DeviceName name = hm10.name();

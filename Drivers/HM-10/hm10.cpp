@@ -658,6 +658,15 @@ bool HM10::sendData(std::uint8_t const* data, std::size_t length, bool waitForTx
   return false;
 }
 
+bool HM10::printf(char const* fmt, ...) {
+  std::va_list args;
+  va_start(args, fmt);
+  copyCommandToBufferVarg(fmt, args);
+  va_end(args);
+
+  return transmitBuffer() == HAL_OK;
+}
+
 // ===== Private/low-level/utility functions ===== //
 
 bool HM10::handleConnectionMessage() {
@@ -758,7 +767,7 @@ bool HM10::transmitAndCheckResponse(char const* expectedResponse, char const* fo
   return compareWithResponse(expectedResponse);
 }
 
-void HM10::copyCommandToBuffer(char const* const commandPattern, ...) {
+void HM10::copyCommandToBuffer(char const* commandPattern, ...) {
   std::va_list args;
   va_start(args, commandPattern);
 
@@ -767,7 +776,7 @@ void HM10::copyCommandToBuffer(char const* const commandPattern, ...) {
   va_end(args);
 }
 
-void HM10::copyCommandToBufferVarg(char const* const commandPattern, std::va_list args) {
+void HM10::copyCommandToBufferVarg(char const* commandPattern, std::va_list args) {
   m_txDataLength = vsnprintf(&m_txBuffer[0], bufferSize(), commandPattern, args);
 }
 
