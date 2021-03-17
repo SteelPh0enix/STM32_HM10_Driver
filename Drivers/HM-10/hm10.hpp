@@ -100,6 +100,10 @@ public:
   // Tells if the module is connected to a master device
   bool isConnected() const;
 
+  // Enables or disabled RFComm mode (first byte of the message is treated as message length)
+  void setRFCommMode(bool enabled);
+  bool rfCommMode() const;
+
   // Returns MAC address of a master device
   MACAddress masterMAC() const;
 
@@ -255,11 +259,14 @@ public:
   // Returns 'false' if module is not connected.
   // This function is blocking the thread by default.
   // Change `waitForTx` to `false` to not block the thread.
+  // This function WILL NOT send the data according to BLERFComm format.
+  // It'll literally just send the raw data you've put in the buffer, no matter the mode.
   bool sendData(std::uint8_t const* data, std::size_t length, bool waitForTx = true);
 
-  // printf, but on the module buffers.
+  // printf, using the object buffers.
   // Be careful to not send more data than in HM10_BUFFER_SIZE
   // It won't crash the program, it'll be stripped down to buffer size.
+  // This function will send the data according to BLERFComm format, if enabled.
   bool printf(char const* fmt, ...);
 
 private:
@@ -316,6 +323,8 @@ private:
   DataCallbackT m_dataCallback { nullptr };
   DeviceConnectedT m_deviceConnectedCallback { nullptr };
   DeviceDisconnectedT m_deviceDisconnectedCallback { nullptr };
+
+  bool m_rfCommMode { false };
 };
 
 }

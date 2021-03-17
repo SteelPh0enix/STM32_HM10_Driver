@@ -92,7 +92,14 @@ void HM10::receiveCompleted() {
   // Unexpected data - either information about new connection/disconnection
   // or data for the application
   if (!isReceiving() && !handleConnectionMessage() && m_dataCallback != nullptr) {
-    m_dataCallback(m_messageBuffer, m_messageLength);
+    if (rfCommMode()) {
+      // HM-10 automagically joins parts of the >20B message, so the first byte is not necessary.
+      // We'll still keep it as messageLength in case something goes wrong, because i haven't tested
+      // if it joins up the message in *every* case.
+      m_dataCallback(m_messageBuffer + 1, m_messageBuffer[0]);
+    } else {
+      m_dataCallback(m_messageBuffer, m_messageLength);
+    }
   }
 
   m_rxInProgress = false;
@@ -116,6 +123,14 @@ bool HM10::isTransmitting() const {
 
 bool HM10::isConnected() const {
   return m_isConnected;
+}
+
+void HM10::setRFCommMode(bool enabled) {
+  m_rfCommMode = enabled;
+}
+
+bool HM10::rfCommMode() const {
+  return m_rfCommMode;
 }
 
 MACAddress HM10::masterMAC() const {
@@ -661,7 +676,12 @@ bool HM10::sendData(std::uint8_t const* data, std::size_t length, bool waitForTx
 bool HM10::printf(char const* fmt, ...) {
   std::va_list args;
   va_start(args, fmt);
-  copyCommandToBufferVarg(fmt, args);
+  if (rfCommMode()) {
+    m_txDataLength = vsnprintf(&m_txBuffer[1], bufferSize() - 1, fmt, args) + 1;
+    m_txBuffer[0] = static_cast<std::uint8_t>(m_txDataLength - 1);
+  } else {
+    copyCommandToBufferVarg(fmt, args);
+  }
   va_end(args);
 
   return transmitBuffer() == HAL_OK;
